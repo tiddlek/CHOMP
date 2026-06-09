@@ -1,3 +1,4 @@
+import os
 import pyqtgraph as pg
 from styles import *
 from pyqtgraph import AxisItem
@@ -8,11 +9,10 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QLabel, QButtonGroup,
     QLineEdit, QToolButton, QGraphicsPathItem,
     QTableWidget, QTableWidgetItem, QMessageBox,
-    QGraphicsPolygonItem, QGraphicsScene, QGraphicsView
-)
+    QGraphicsPolygonItem, QGraphicsScene, QGraphicsView)
 from PyQt6.QtGui import (
     QFont, QPainterPath, QPolygonF,
-    QPen, QBrush, QColor)
+    QPen, QBrush, QColor, QFontDatabase)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -946,8 +946,21 @@ class LiquidPage(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("Liquid Handler"))
 
+def load_fonts():
+    base_path = os.path.dirname(__file__)
+    font_dir = os.path.join(base_path, "Cantarell")
+
+    regular = os.path.join(font_dir, "Cantarell-Regular.ttf")
+    bold = os.path.join(font_dir, "Cantarell-Bold.ttf")
+
+    QFontDatabase.addApplicationFont(regular)
+    QFontDatabase.addApplicationFont(bold)
+
 def main():
     app = QApplication([])
+
+    load_fonts()
+
     app.setFont(QFont("Cantarell", 16))
 
     w = MainWindow()
