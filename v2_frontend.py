@@ -1,6 +1,6 @@
 import os
 import pyqtgraph as pg
-from styles import *
+from v2_styles import *
 from pyqtgraph import AxisItem
 from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtWidgets import (
