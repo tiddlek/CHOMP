@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
     def setup_window(self):
         
         self.setWindowTitle("CHOMP")
-        self.resize(900,700)
+        self.resize(1200,800)
 
         self.central = QWidget()
         self.setCentralWidget(self.central) 
@@ -43,8 +43,10 @@ class MainWindow(QMainWindow):
         self.btn_3 = QPushButton("Reagents")
 
         self.nav_bar.addWidget(self.btn_1)
-        self.nav_bar.addSpacing(70)
+        self.nav_bar.addSpacing(60)
         self.nav_bar.addWidget(self.btn_2)
+        self.nav_bar.addSpacing(30)
+
         self.nav_bar.addWidget(self.btn_3)
 
         self.btn_1.clicked.connect(lambda: self.stack.setCurrentIndex(0))
@@ -71,9 +73,7 @@ class MainWindow(QMainWindow):
         self.btn_3.setStyleSheet(NAV_BUTTON)
 
         self.nav_bar.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.nav_bar.setContentsMargins(40, 30, 40, 0)
-        #self.nav_bar.addStretch()
-        self.nav_bar.setSpacing(40)
+        self.nav_bar.setContentsMargins(60, 30, 40, 0)
 
     def create_pages(self):
         self.stack = QStackedWidget()
