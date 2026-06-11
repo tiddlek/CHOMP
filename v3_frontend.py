@@ -2,7 +2,7 @@ import os
 import pyqtgraph as pg
 from v3_styles import *
 from pyqtgraph import AxisItem
-from PyQt6.QtCore import Qt, QPointF
+from PyQt6.QtCore import Qt, QPointF, QSize
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QPushButton,
@@ -12,7 +12,8 @@ from PyQt6.QtWidgets import (
     QGraphicsPolygonItem, QGraphicsScene, QGraphicsView)
 from PyQt6.QtGui import (
     QFont, QPainterPath, QPolygonF,
-    QPen, QBrush, QColor, QFontDatabase)
+    QPen, QBrush, QColor, QFontDatabase, 
+    QIcon)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -26,7 +27,7 @@ class MainWindow(QMainWindow):
     def setup_window(self):
         
         self.setWindowTitle("CHOMP")
-        self.resize(1200,800)
+        self.resize(1140,760)
 
         self.central = QWidget()
         self.setCentralWidget(self.central) 
@@ -107,11 +108,83 @@ class HomePage(QWidget):
         layout.addWidget(subtitle)
         layout.addStretch()
 
+class Chamber:
+    def __init__(self, name):
+        self.name = name
+        self.pressure = 1.0
+        self.flow_rate = 0.0
+
+class ChamberWindow(QWidget):
+   def __init__(self, chamber):
+        super().__init__()
+
+        self.chamber = chamber
+
+        self.setWindowTitle(chamber.name)
+        self.resize(600, 400)
+
+        layout = QVBoxLayout(self)
+
+        title = QLabel(chamber.name)
+        layout.addWidget(title)
+
+        self.pressure_label = QLabel(f"Pressure: {chamber.pressure}")
+        layout.addWidget(self.pressure_label)
+
 class ChambersPage(QWidget):
     def __init__(self):
         super().__init__()
-        layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Chambers"))
+
+        self.chamber_count = 0
+        self.chambers = []
+        self.windows = []
+
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(100, 30, 60, 30)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        title = QLabel("Atmospheric Chambers")
+        title.setStyleSheet(PAGE_TITLE)
+
+        self.chamber_layout = QHBoxLayout()
+
+        self.add_button = QToolButton()
+        self.add_button.setText("+ \n Add Chamber")
+        self.add_button.setStyleSheet(ADD_BUTTON)
+        self.add_button.setFixedSize(300, 450)
+        self.add_button.clicked.connect(self.add_chamber)
+
+        self.chamber_layout.addWidget(self.add_button)
+
+        self.main_layout.addWidget(title)
+        self.main_layout.addSpacing(20)
+        self.main_layout.addLayout(self.chamber_layout)
+
+    def add_chamber(self):
+        self.chamber_count += 1
+
+        chamber = Chamber(f"Chamber {self.chamber_count}")
+        self.chambers.append(chamber)
+
+        btn = QToolButton()
+        btn.setText(f"({self.chamber_count})")
+        btn.setIcon(QIcon("chamber.png"))
+        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        btn.setIconSize(QSize(200, 200))
+        btn.setFixedSize(300, 450)
+        btn.setStyleSheet(CHAMBER_BUTTON)
+
+        btn.clicked.connect(lambda _, c=chamber: self.open_chamber(c))
+
+        self.chamber_layout.insertWidget(
+            self.chamber_layout.count() - 1,
+            btn
+        )
+
+    def open_chamber(self, chamber):
+        win = ChamberWindow(chamber)
+        self.windows.append(win)
+        win.show()
 
 class ReagentsPage(QWidget):
     def __init__(self):
