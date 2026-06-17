@@ -108,14 +108,91 @@ class HomePage(QWidget):
         layout.addWidget(subtitle)
         layout.addStretch()
 
+class MFCTask:
+    def __init__(self, flow_rate=0.0, start_time=0.0, stop_time=0.0):
+        self.flow_rate = flow_rate
+        self.start_time = start_time
+        self.stop_time = stop_time
+
+    def set_start(self, start_time):
+        self.start_time = start_time
+
+    def set_stop(self, stop_time):
+        self.stop_time = stop_time
+
+    def set_flow_rate(self, flow_rate):
+        self.flow_rate = flow_rate
+
+class MFC:
+    def __init__(self, name):
+        self.name = name
+        self.tasks = []
+
+    def add_task(self, task):
+        self.tasks.append(task)
+
+    def delete_task(self, index):
+        if 0 <= index < len(self.tasks):
+            del self.tasks[index]
+
+    def plot(self):
+        """
+        Later:
+        x-axis = time
+        y-axis = flow rate
+
+        Build step-function from tasks and
+        draw on pyqtgraph.
+        """
+        pass
+
 class Chamber:
     def __init__(self, name):
         self.name = name
-        self.pressure = 1.0
-        self.flow_rate = 0.0
+        self.mfcs = []
+
+    def add_mfc(self, mfc):
+        self.mfcs.append(mfc)
+
+    def delete_mfc(self, index):
+        if 0 <= index < len(self.mfcs):
+            del self.mfcs[index]
+
+class TimeInput(QWidget):
+    def __init__(self, label_text):
+        super().__init__()
+
+        layout = QHBoxLayout(self)
+
+        self.label = QLabel(label_text)
+
+        self.time = QLineEdit()
+        self.time.setInputMask("00:00")
+
+        self.am = QToolButton()
+        self.pm = QToolButton()
+
+        self.am.setText("AM")
+        self.pm.setText("PM")
+
+        self.am.setCheckable(True)
+        self.pm.setCheckable(True)
+
+        group = QButtonGroup(self)
+        group.setExclusive(True)
+        group.addButton(self.am)
+        group.addButton(self.pm)
+
+        self.am.setChecked(True)
+
+        layout.addWidget(self.label)
+        layout.addWidget(self.time)
+        layout.addWidget(self.am)
+        layout.addWidget(self.pm)
+        layout.addStretch()
 
 class ChamberWindow(QWidget):
-   def __init__(self, chamber):
+    def __init__(self, chamber):
         super().__init__()
 
         self.chamber = chamber
@@ -125,11 +202,18 @@ class ChamberWindow(QWidget):
 
         layout = QVBoxLayout(self)
 
-        title = QLabel(chamber.name)
-        layout.addWidget(title)
+        title = QLabel("CHOMP")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet(f"font-size: 62px; font-weight: bold; color: {BLUE};")
 
-        self.pressure_label = QLabel(f"Pressure: {chamber.pressure}")
-        layout.addWidget(self.pressure_label)
+        subtitle = QLabel("atmospheriC cHamber\nautOMation Platform")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        subtitle.setStyleSheet("font-size: 24px; font-weight: regular; color: black;")
+
+        layout.addStretch()
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        layout.addStretch()
 
 class ChambersPage(QWidget):
     def __init__(self):
@@ -163,11 +247,11 @@ class ChambersPage(QWidget):
     def add_chamber(self):
         self.chamber_count += 1
 
-        chamber = Chamber(f"Chamber {self.chamber_count}")
+        chamber = Chamber(f"chamber_{self.chamber_count}")
         self.chambers.append(chamber)
 
         btn = QToolButton()
-        btn.setText(f"({self.chamber_count})")
+        btn.setText(f" Atmospheric Chamber \n #{self.chamber_count}")
         btn.setIcon(QIcon("chamber.png"))
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         btn.setIconSize(QSize(200, 200))

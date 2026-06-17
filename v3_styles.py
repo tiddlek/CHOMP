@@ -1,5 +1,5 @@
-BACKGROUND = "#E5E8EF"
-BLUE = "#32497A"
+BACKGROUND = "#F0F3F9"
+BLUE = "#094D5A"
 
 APP_BACKGROUND = f"QWidget {{background-color: {BACKGROUND};}}"
 
