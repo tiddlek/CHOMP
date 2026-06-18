@@ -127,6 +127,7 @@ class MFC:
     def __init__(self, name):
         self.name = name
         self.tasks = []
+        self.color = "#"
 
     def add_task(self, task):
         self.tasks.append(task)
@@ -195,25 +196,82 @@ class ChamberWindow(QWidget):
     def __init__(self, chamber):
         super().__init__()
 
+        self.mfc_count = 0
+        self.mfc_windows = []
         self.chamber = chamber
 
         self.setWindowTitle(chamber.name)
-        self.resize(600, 400)
+        self.resize(900,700)
 
         layout = QVBoxLayout(self)
 
-        title = QLabel("CHOMP")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title.setStyleSheet(f"font-size: 62px; font-weight: bold; color: {BLUE};")
+        title1 = QLabel(self.chamber.name.upper())
+        title1.setStyleSheet(PAGE_TITLE)
 
-        subtitle = QLabel("atmospheriC cHamber\nautOMation Platform")
-        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle.setStyleSheet("font-size: 24px; font-weight: regular; color: black;")
+        title2 = QLabel("Lights")
+        title2.setStyleSheet(PAGE_TITLE)
 
+        title3 = QLabel("MFCs")
+        title3.setStyleSheet(PAGE_TITLE)
+        self.line3 = QHBoxLayout()
+        self.add_mfc_btn = QToolButton()
+        self.add_mfc_btn.setStyleSheet(MFC_ADD_BUTTON)
+        self.add_mfc_btn.setText("+\nMFC")
+        self.add_mfc_btn.setFixedSize(100, 100)
+        self.add_mfc_btn.clicked.connect(self.add_mfc)
+        self.line3.addWidget(self.add_mfc_btn)
+
+        layout.setContentsMargins(80, 60, 60, 30)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(title1)
+        layout.addWidget(title2)
+        layout.addWidget(title3)
+        layout.addLayout(self.line3)
         layout.addStretch()
+
+    def add_mfc(self):
+        self.mfc_count += 1
+
+        mfc = MFC(f"MFC {self.mfc_count}")
+        self.chamber.add_mfc(mfc)
+
+        btn = QToolButton()
+        btn.setText(f"MFC {self.mfc_count}")
+        btn.setIcon(QIcon("mfc.png"))
+        btn.setIconSize(QSize(50, 50))
+        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+
+        btn.setFixedSize(100, 100)
+        btn.setStyleSheet(MFC_BUTTON)  # or create MFC_BUTTON style
+
+        btn.clicked.connect(lambda _, m=mfc: self.open_mfc(m))
+
+        self.line3.insertWidget(
+            self.line3.count() - 1,
+            btn
+        )
+
+    def open_mfc(self, mfc):
+        win = MFCWindow(mfc)
+        self.mfc_windows.append(win)
+        win.show()
+
+class MFCWindow(QWidget):
+    def __init__(self, mfc):
+        super().__init__()
+
+        self.mfc = mfc
+
+        self.setWindowTitle(mfc.name)
+        self.resize(700, 500)
+
+        layout = QVBoxLayout(self)
+
+        title = QLabel(mfc.name)
+        title.setStyleSheet(PAGE_TITLE)
+
         layout.addWidget(title)
-        layout.addWidget(subtitle)
-        layout.addStretch()
+        layout.addWidget(QLabel("MFC control panel goes here"))
 
 class ChambersPage(QWidget):
     def __init__(self):
@@ -247,11 +305,11 @@ class ChambersPage(QWidget):
     def add_chamber(self):
         self.chamber_count += 1
 
-        chamber = Chamber(f"chamber_{self.chamber_count}")
+        chamber = Chamber(f"Chamber {self.chamber_count}")
         self.chambers.append(chamber)
 
         btn = QToolButton()
-        btn.setText(f" Atmospheric Chamber \n #{self.chamber_count}")
+        btn.setText(f"Chamber {self.chamber_count}")
         btn.setIcon(QIcon("chamber.png"))
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         btn.setIconSize(QSize(200, 200))
