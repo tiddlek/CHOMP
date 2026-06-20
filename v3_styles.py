@@ -169,3 +169,22 @@ QToolButton:disabled {
     color: #A0A0A0;
 }
 """
+
+TABLE = f"""
+QTableWidget {{
+    border: 2px solid black;
+    background-color: {BACKGROUND};
+    gridline-color: #D0D0D0;
+}}
+
+QHeaderView::section {{
+    background-color: {BACKGROUND};
+    font-weight: bold;
+    padding: 4px;
+}}
+
+QTableWidget::item:selected {{
+    background-color: {BLUE};
+    color: black;
+}}
+"""

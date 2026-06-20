@@ -271,16 +271,375 @@ class MFCWindow(QWidget):
 
         self.mfc = mfc
 
-        self.setWindowTitle(mfc.name)
-        self.resize(700, 500)
+        self.task_count = 0
+        self.task_boxes = []
+        self.task_table = QTableWidget()
+        self.graph = self.create_plot()
 
         layout = QVBoxLayout(self)
 
-        title = QLabel(mfc.name)
+        top_layout = QHBoxLayout()
+
+        self.left = self.create_left()
+        self.right = self.create_right()
+
+        left_widget = QWidget()
+        left_widget.setLayout(self.left)
+
+        right_widget = QWidget()
+        right_widget.setLayout(self.right)
+
+        top_layout.addWidget(left_widget, 1)
+        top_layout.addWidget(right_widget, 1)
+       
+        layout.addLayout(top_layout)
+
+        layout.addSpacing(50)
+
+        layout.addWidget(self.graph)
+
+    def create_left(self):    
+        
+        left_layout = QVBoxLayout()
+        title = QLabel(self.mfc.name)
         title.setStyleSheet(PAGE_TITLE)
 
-        layout.addWidget(title)
-        layout.addWidget(QLabel("MFC control panel goes here"))
+        self.mfc1 = QPushButton("1")
+        self.mfc2 = QPushButton("2")
+
+        self.mfc1.setCheckable(True)
+        self.mfc2.setCheckable(True)
+
+        self.mfc1.setFixedSize(28,28)
+        self.mfc2.setFixedSize(28,28)
+
+        def mfc_button_style(color):
+            return f"""
+            QPushButton {{
+                background-color: transparent;
+                color: {color};
+                border: 2px solid {color};
+                border-radius: 4px;
+                font-weight: bold;
+            }}
+
+            QPushButton:checked {{
+                background-color: {color};
+                color: white;
+                border: 2px solid {color};
+            }}
+
+            QPushButton:hover {{
+                border: 2px solid {color};
+            }}
+            """
+
+        self.mfc1.setStyleSheet(mfc_button_style(BLUE))
+
+        self.mfc2.setStyleSheet(mfc_button_style(BLUE))
+
+        self.start_row = self.create_start()
+        self.stop_row = self.create_stop()
+        self.slpm_row = self.create_slpm()
+        self.task_button = self.create_task_button()
+        left_layout.setContentsMargins(40, 20, -20, 0)
+        title_row = QHBoxLayout()
+        title_row.addWidget(title)
+        title_row.addSpacing(10)
+        title_row.addWidget(self.mfc1)
+        title_row.addWidget(self.mfc2)
+        title_row.addStretch()
+
+        left_layout.addLayout(title_row)
+        left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        left_layout.addSpacing(10)
+        left_layout.addWidget(self.start_row)
+        left_layout.addWidget(self.stop_row)
+        left_layout.addLayout(self.slpm_row)
+        left_layout.addSpacing(5)
+        left_layout.addWidget(self.task_button)
+
+        return left_layout
+
+    def create_right(self):
+        
+        right_layout = QVBoxLayout()
+
+        title = QLabel("Task List")
+        title.setStyleSheet(PAGE_TITLE)
+
+        self.task_table = QTableWidget()
+        self.task_table.setColumnCount(4)
+        self.task_table.setHorizontalHeaderLabels(
+            ["Device", "Start", "Stop", "SLPM"]
+        )
+
+        self.task_table.setFixedSize(336, 120)
+
+
+        self.task_table.setStyleSheet(TABLE)
+
+        self.task_table.setColumnWidth(0, 83)   # Task
+        self.task_table.setColumnWidth(1, 83)   # Start
+        self.task_table.setColumnWidth(2, 83)   # Stop
+        self.task_table.setColumnWidth(3, 83)   # SLPM
+        self.task_table.verticalHeader().setVisible(False)
+        self.task_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.task_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+
+        self.task_table.setStyleSheet(TABLE)
+
+        self.delete_button = QPushButton("Delete Task")
+        self.delete_button.setFixedHeight(30)
+        self.delete_button.clicked.connect(self.delete_task)
+
+        self.delete_button.setStyleSheet(ACTION_BUTTON)
+
+        right_layout.setContentsMargins(40,20,40,0)
+        right_layout.addWidget(title)
+        right_layout.addWidget(self.task_table)
+
+        right_layout.addSpacing(5)
+
+
+        right_layout.addWidget(self.delete_button)
+
+        return right_layout
+
+    def create_start(self):
+        return TimeInput("Start")
+
+    def create_stop(self):
+        return TimeInput("Stop")
+
+    def create_slpm(self):
+
+        slpm_row = QHBoxLayout()
+
+        self.slpm_unit = QLabel("SLPM")
+        self.slpm_label = QLabel("Flow Rate")
+        self.slpm_input = QLineEdit()
+        
+        self.slpm_input.setInputMask("00.00")
+        self.slpm_input.setMaximumWidth(60)
+
+
+        slpm_row.addWidget(self.slpm_label)
+        slpm_row.addWidget(self.slpm_input)
+        slpm_row.addWidget(self.slpm_unit)
+        slpm_row.addStretch()
+
+        self.slpm_input.setStyleSheet(LINE_EDIT)
+        
+        return slpm_row
+
+    def create_task_button(self):
+
+        button = QPushButton("Add Task")
+
+        button.setFixedSize(270, 30)
+
+        button.setStyleSheet(ACTION_BUTTON)
+
+        button.clicked.connect(self.add_task)
+
+        return button
+
+    def create_plot(self):
+
+        slpm_axis = AxisItem(orientation="left")
+        slpm_ticks = [
+            [(i, "") for i in range(0, 11)],          # minor ticks (no labels)
+            [(i, str(i)) for i in range(0, 11, 2)]    # major ticks (labels)
+        ]
+
+        time_axis = AxisItem(orientation="bottom")
+        time_ticks = [
+        [(4,  "4:00"),
+        (8,  "8:00"),
+        (12, "12:00"),
+        (16, "4:00"),
+        (20, "8:00"),
+        (24, "12:00")],
+        [(i, "") for i in range(0, 25, 1)]
+        ]
+
+        slpm_axis.setTicks(slpm_ticks)
+        time_axis.setTicks(time_ticks)
+        time_axis.setTickSpacing(4,4)
+
+
+        self.graph = pg.PlotWidget(axisItems={
+            "left": slpm_axis,
+            "bottom": time_axis
+        })
+
+        self.graph.getAxis("bottom").setStyle(
+            tickLength=5,
+            tickTextOffset=8
+        )
+
+        self.graph.getAxis("left").setStyle(
+            tickLength=5,
+            tickTextOffset=8
+        )
+
+        self.graph.setBackground(BACKGROUND)
+        self.graph.showGrid(x=False, y=False, alpha=1.0)
+        self.graph.getAxis("left").setPen("k")
+        self.graph.getAxis("bottom").setPen("k")
+
+        self.graph.setLabel("left", "SLPM")
+        self.graph.setLabel("bottom", "Time (hours)")
+
+        self.graph.setYRange(0, 10, padding=0)
+        self.graph.setXRange(0, 24, padding=0)
+
+        self.graph.getViewBox().setDefaultPadding(0)
+
+        self.graph.getPlotItem().layout.setContentsMargins(10, 10, 20, 20)
+
+        axis_pen = pg.mkPen(color="black", width=2)
+
+        time_axis.setPen(axis_pen)
+        slpm_axis.setPen(axis_pen)
+
+        self.graph.getAxis("left").setTextPen("k")
+        self.graph.getAxis("bottom").setTextPen("k")
+        self.graph.setMouseEnabled(x=False, y=False)
+
+        return self.graph
+
+    def parse_time(self, t, is_pm):
+        h, m = t.split(":")
+
+        h = int(h)
+        m = int(m)
+
+        # validate 12-hour clock input
+        if not (1 <= h <= 12):
+            raise ValueError("Hour must be 1–12")
+
+        if not (0 <= m <= 59):
+            raise ValueError("Minutes must be 00–59")
+
+        # convert to 24-hour decimal
+        if is_pm and h != 12:
+            h += 12
+        if not is_pm and h == 12:
+            h = 0
+
+        return h + m / 60
+
+    def format_time(self, t):
+        """Convert decimal hours -> 'H:MM AM/PM'"""
+        h = int(t)
+        m = int(round((t - h) * 60))
+
+        if m == 60:
+            h += 1
+            m = 0
+
+        am_pm = "am"
+        display_h = h
+
+        if h >= 12:
+            am_pm = "pm"
+        if h > 12:
+            display_h = h - 12
+        if h == 0:
+            display_h = 12
+
+        return f"{display_h}:{m:02d} {am_pm}"
+
+    def delete_task(self):
+        row = self.task_table.currentRow()
+
+        if row >= 0:
+            box = self.task_boxes.pop(row)
+            self.graph.removeItem(box)
+            self.task_table.removeRow(row)
+
+    def add_task(self):
+        try:
+            start_pm = self.start_row.pm.isChecked()
+            stop_pm = self.stop_row.pm.isChecked()
+
+            start = self.parse_time(
+                self.start_row.time.text(),
+                start_pm
+            )
+
+            stop = self.parse_time(
+                self.stop_row.time.text(),
+                stop_pm
+            )
+            flow = float(self.slpm_input.text())
+
+            if start >= stop:
+                raise ValueError("Start must be before stop")
+
+        except ValueError as e:
+            QMessageBox.warning(self, "Invalid Input", str(e))
+            return
+        
+        selected = []
+        colors = []
+
+        if self.mfc1.isChecked():
+            selected.append("1")
+            colors.append(BLUE)      # blue
+
+        if self.mfc2.isChecked():
+            selected.append("2")
+            colors.append(BLUE)      # orange
+
+        if not selected:
+            QMessageBox.warning(
+                self,
+                "No MFC Selected",
+                "Select at least one MFC."
+            )
+            return
+
+        number_text = ", ".join(selected)
+
+        row = self.task_table.rowCount()
+        self.task_table.insertRow(row)
+
+        self.task_table.setItem(row, 0, QTableWidgetItem(number_text))
+        self.task_table.setItem(row, 1, QTableWidgetItem(self.format_time(start)))
+        self.task_table.setItem(row, 2, QTableWidgetItem(self.format_time(stop)))
+        self.task_table.setItem(row, 3, QTableWidgetItem(str(flow)))
+
+        
+
+        width = stop - start
+        center = start + width / 2
+
+        if len(colors) == 2:
+            BOX_COLOR = BLUE     # blend-ish color when both selected
+        else:
+            BOX_COLOR = colors[0]
+
+        path = QPainterPath()
+        path.addRoundedRect(
+            center - width/2,       # x
+            0.05,                   # y
+            width,                  # width
+            flow-0.05,              # height
+            0.3,                    # x radius
+            0.3                     # y radius
+        )
+
+        box = QGraphicsPathItem(path)
+
+        box.setBrush(pg.mkBrush(BOX_COLOR))
+        box.setPen(pg.mkPen(BACKGROUND, width=2))
+
+        self.graph.addItem(box)
+        self.task_boxes.append(box)
+
 
 class ChambersPage(QWidget):
     def __init__(self):
