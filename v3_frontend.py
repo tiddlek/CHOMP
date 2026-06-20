@@ -151,6 +151,7 @@ class Chamber:
     def __init__(self, name):
         self.name = name
         self.mfcs = []
+        self.mfc_count = 0
 
     def add_mfc(self, mfc):
         self.mfcs.append(mfc)
@@ -196,7 +197,6 @@ class ChamberWindow(QWidget):
     def __init__(self, chamber):
         super().__init__()
 
-        self.mfc_count = 0
         self.mfc_windows = []
         self.chamber = chamber
 
@@ -220,6 +220,8 @@ class ChamberWindow(QWidget):
         self.add_mfc_btn.setFixedSize(100, 100)
         self.add_mfc_btn.clicked.connect(self.add_mfc)
         self.line3.addWidget(self.add_mfc_btn)
+        for mfc in self.chamber.mfcs:
+            self.create_mfc_button(mfc)
 
         layout.setContentsMargins(80, 60, 60, 30)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -229,27 +231,34 @@ class ChamberWindow(QWidget):
         layout.addLayout(self.line3)
         layout.addStretch()
 
-    def add_mfc(self):
-        self.mfc_count += 1
-
-        mfc = MFC(f"MFC {self.mfc_count}")
-        self.chamber.add_mfc(mfc)
-
+    def create_mfc_button(self, mfc):
         btn = QToolButton()
-        btn.setText(f"MFC {self.mfc_count}")
+        btn.setText(mfc.name)
         btn.setIcon(QIcon("mfc.png"))
         btn.setIconSize(QSize(50, 50))
-        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        btn.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+        )
 
         btn.setFixedSize(100, 100)
-        btn.setStyleSheet(MFC_BUTTON)  # or create MFC_BUTTON style
+        btn.setStyleSheet(MFC_BUTTON)
 
-        btn.clicked.connect(lambda _, m=mfc: self.open_mfc(m))
+        btn.clicked.connect(
+            lambda _, m=mfc: self.open_mfc(m)
+        )
 
         self.line3.insertWidget(
             self.line3.count() - 1,
             btn
         )
+
+    def add_mfc(self):
+        self.chamber.mfc_count += 1
+
+        mfc = MFC(f"MFC {self.chamber.mfc_count}")
+        self.chamber.add_mfc(mfc)
+
+        self.create_mfc_button(mfc)
 
     def open_mfc(self, mfc):
         win = MFCWindow(mfc)
