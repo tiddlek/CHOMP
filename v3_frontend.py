@@ -9,11 +9,9 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QLabel, QButtonGroup,
     QLineEdit, QToolButton, QGraphicsPathItem,
     QTableWidget, QTableWidgetItem, QMessageBox,
-    QGraphicsPolygonItem, QGraphicsScene, QGraphicsView)
+    QFormLayout)
 from PyQt6.QtGui import (
-    QFont, QPainterPath, QPolygonF,
-    QPen, QBrush, QColor, QFontDatabase, 
-    QIcon)
+    QFont, QPainterPath, QFontDatabase, QIcon)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -187,16 +185,39 @@ class TimeInput(QWidget):
 
         self.am.setChecked(True)
 
+        self.am.setStyleSheet(AM_PM)
+        self.pm.setStyleSheet(AM_PM)
+
         layout.addWidget(self.label)
         layout.addWidget(self.time)
         layout.addWidget(self.am)
         layout.addWidget(self.pm)
         layout.addStretch()
 
+class FlowInput(QWidget):
+    def __init__(self, label_text):
+        super().__init__()
+
+        layout = QHBoxLayout(self)
+
+        self.label = QLabel(label_text)
+
+        self.time = QLineEdit()
+        self.time.setStyleSheet(LINE_EDIT)
+        self.slpm_unit = QLabel("SLPM")
+
+        self.time.setInputMask("00.00")
+
+    
+        layout.addWidget(self.label)
+        layout.addWidget(self.time)
+        layout.addWidget(self.slpm_unit)
+        layout.addStretch()
+
 class ChamberWindow(QWidget):
     def __init__(self, chamber):
         super().__init__()
-
+        self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc_windows = []
         self.chamber = chamber
 
@@ -268,7 +289,7 @@ class ChamberWindow(QWidget):
 class MFCWindow(QWidget):
     def __init__(self, mfc):
         super().__init__()
-
+        self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc = mfc
 
         self.task_count = 0
@@ -306,48 +327,40 @@ class MFCWindow(QWidget):
 
         self.mfc1 = QPushButton("1")
         self.mfc2 = QPushButton("2")
+        self.mfc3 = QPushButton("3")
 
         self.mfc1.setCheckable(True)
         self.mfc2.setCheckable(True)
+        self.mfc3.setCheckable(True)
 
         self.mfc1.setFixedSize(28,28)
         self.mfc2.setFixedSize(28,28)
+        self.mfc3.setFixedSize(28,28)
 
-        def mfc_button_style(color):
-            return f"""
-            QPushButton {{
-                background-color: transparent;
-                color: {color};
-                border: 2px solid {color};
-                border-radius: 4px;
-                font-weight: bold;
-            }}
+        self.mfc1.setStyleSheet(WIRE_BUTTON)
+        self.mfc2.setStyleSheet(WIRE_BUTTON)
+        self.mfc3.setStyleSheet(WIRE_BUTTON)
 
-            QPushButton:checked {{
-                background-color: {color};
-                color: white;
-                border: 2px solid {color};
-            }}
+        self.mfc_group = QButtonGroup(self)
+        self.mfc_group.setExclusive(True)
 
-            QPushButton:hover {{
-                border: 2px solid {color};
-            }}
-            """
+        self.mfc_group.addButton(self.mfc1)
+        self.mfc_group.addButton(self.mfc2)
+        self.mfc_group.addButton(self.mfc3)
 
-        self.mfc1.setStyleSheet(mfc_button_style(BLUE))
-
-        self.mfc2.setStyleSheet(mfc_button_style(BLUE))
-
-        self.start_row = self.create_start()
-        self.stop_row = self.create_stop()
-        self.slpm_row = self.create_slpm()
+        self.start_row = TimeInput("Start")
+        self.start_row.setStyleSheet(LINE_EDIT)
+        self.stop_row = TimeInput("Stop")
+        self.stop_row.setStyleSheet(LINE_EDIT)
+        self.slpm_row = FlowInput("Flow")
         self.task_button = self.create_task_button()
-        left_layout.setContentsMargins(40, 20, -20, 0)
+        left_layout.setContentsMargins(40, 20, 20, 0)
         title_row = QHBoxLayout()
         title_row.addWidget(title)
         title_row.addSpacing(10)
         title_row.addWidget(self.mfc1)
         title_row.addWidget(self.mfc2)
+        title_row.addWidget(self.mfc3)
         title_row.addStretch()
 
         left_layout.addLayout(title_row)
@@ -355,7 +368,8 @@ class MFCWindow(QWidget):
         left_layout.addSpacing(10)
         left_layout.addWidget(self.start_row)
         left_layout.addWidget(self.stop_row)
-        left_layout.addLayout(self.slpm_row)
+        left_layout.addWidget(self.slpm_row)
+
         left_layout.addSpacing(5)
         left_layout.addWidget(self.task_button)
 
@@ -406,18 +420,12 @@ class MFCWindow(QWidget):
 
         return right_layout
 
-    def create_start(self):
-        return TimeInput("Start")
-
-    def create_stop(self):
-        return TimeInput("Stop")
-
     def create_slpm(self):
 
         slpm_row = QHBoxLayout()
 
         self.slpm_unit = QLabel("SLPM")
-        self.slpm_label = QLabel("Flow Rate")
+        self.slpm_label = QLabel("Flow")
         self.slpm_input = QLineEdit()
         
         self.slpm_input.setInputMask("00.00")
@@ -583,29 +591,25 @@ class MFCWindow(QWidget):
             QMessageBox.warning(self, "Invalid Input", str(e))
             return
         
-        selected = []
-        colors = []
-
+        number_text = ""
         if self.mfc1.isChecked():
-            selected.append("1")
-            colors.append(BLUE)      # blue
-
-        if self.mfc2.isChecked():
-            selected.append("2")
-            colors.append(BLUE)      # orange
-
-        if not selected:
+            number_text += "1"
+        elif self.mfc2.isChecked():
+            number_text += "2"
+        elif self.mfc3.isChecked():
+            number_text += "3"
+        else:
             QMessageBox.warning(
                 self,
-                "No MFC Selected",
-                "Select at least one MFC."
+                "No Wire Selected",
+                "Select at least one Wire."
             )
             return
 
-        number_text = ", ".join(selected)
-
         row = self.task_table.rowCount()
         self.task_table.insertRow(row)
+
+
 
         self.task_table.setItem(row, 0, QTableWidgetItem(number_text))
         self.task_table.setItem(row, 1, QTableWidgetItem(self.format_time(start)))
@@ -616,11 +620,6 @@ class MFCWindow(QWidget):
 
         width = stop - start
         center = start + width / 2
-
-        if len(colors) == 2:
-            BOX_COLOR = BLUE     # blend-ish color when both selected
-        else:
-            BOX_COLOR = colors[0]
 
         path = QPainterPath()
         path.addRoundedRect(
@@ -634,12 +633,11 @@ class MFCWindow(QWidget):
 
         box = QGraphicsPathItem(path)
 
-        box.setBrush(pg.mkBrush(BOX_COLOR))
+        box.setBrush(pg.mkBrush(BLUE))
         box.setPen(pg.mkPen(BACKGROUND, width=2))
 
         self.graph.addItem(box)
         self.task_boxes.append(box)
-
 
 class ChambersPage(QWidget):
     def __init__(self):

@@ -188,3 +188,47 @@ QTableWidget::item:selected {{
     color: black;
 }}
 """
+
+WIRE_BUTTON = f"""
+    QPushButton {{
+        background-color: transparent;
+        color: {BLUE};
+        border: 2px solid {BLUE};
+        border-radius: 4px;
+        font-weight: bold;
+    }}
+
+    QPushButton:checked {{
+        background-color: {BLUE};
+        color: white;
+        border: 2px solid {BLUE};
+    }}
+
+    QPushButton:hover {{
+        border: 2px solid {BLUE};
+    }}
+"""
+
+AM_PM = f"""
+QToolButton {{
+    background-color: transparent;
+    color: {BLUE};
+    border: 1.5px solid {BLUE};
+    border-radius: 10px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+}}
+
+QToolButton:!checked {{
+    background-color: transparent;
+    color: {BLUE};
+    border: 1.5px solid {BLUE};
+}}
+
+QToolButton:checked {{
+    background-color: {BLUE};
+    color: white;
+    border: 1.5px solid {BLUE};
+}}
+"""
