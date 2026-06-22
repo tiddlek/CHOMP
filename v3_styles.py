@@ -1,5 +1,7 @@
-BACKGROUND = "#F0F3F9"
+BACKGROUND = "#F3F1EB"
 BLUE = "#094D5A"
+BUTTON = "#FFFFFF"
+PRESSED = "#E6E2DA"
 
 APP_BACKGROUND = f"QWidget {{background-color: {BACKGROUND};}}"
 
@@ -34,53 +36,53 @@ QPushButton:checked {{
     border-bottom: 2px solid {BLUE};
 }}"""
 
-CHAMBER_BUTTON = """
-QToolButton {
-    background-color: white;
+CHAMBER_BUTTON =f"""
+QToolButton {{
+    background-color: {BUTTON};
     color: black;
-    border: 1px solid #D0D0D0;
+    border: 0px solid #D0D0D0;
     border-radius: 12px;
     padding-top: 70px;
     font-size: 22px;
     font-weight: regular;
-}
+}}
 
-QToolButton:hover {
-    background-color: #F7F7F7;
-}
+QToolButton:hover {{
+    background-color: {BACKGROUND};
+}}
 
-QToolButton:pressed {
-    background-color: #EAEAEA;
-}
+QToolButton:pressed {{
+    background-color: {PRESSED};
+}}
 
-QToolButton:disabled {
+QToolButton:disabled {{
     background-color: #F0F0F0;
     color: #A0A0A0;
-}
+}}
 """
 
-ADD_BUTTON = """
-QToolButton {
-    background-color: white;
+ADD_BUTTON = f"""
+QToolButton {{
+    background-color: {BUTTON};
     color: black;
-    border: 1px solid #D0D0D0;
+    border: -0px solid #D0D0D0;
     border-radius: 12px;
     font-size: 22px;
     font-weight: bold;
-}
+}}
 
-QToolButton:hover {
-    background-color: #F7F7F7;
-}
+QToolButton:hover {{
+    background-color: {BACKGROUND};
+}}
 
-QToolButton:pressed {
-    background-color: #EAEAEA;
-}
+QToolButton:pressed {{
+    background-color: {PRESSED};
+}}
 
-QToolButton:disabled {
+QToolButton:disabled {{
     background-color: #F0F0F0;
     color: #A0A0A0;
-}
+}}
 """
 
 PAGE_TITLE = """
@@ -120,54 +122,54 @@ QPushButton:pressed {{
 }}
 """
 
-MFC_BUTTON = """
-QToolButton {
-    background-color: white;
+MFC_BUTTON = f"""
+QToolButton {{
+    background-color: {BUTTON};
     color: black;
-    border: 1px solid #D0D0D0;
+    border: 0px solid #D0D0D0;
     border-radius: 12px;
     padding-top: 10px;
     font-size: 22px;
     font-weight: regular;
-}
+}}
 
-QToolButton:hover {
-    background-color: #F7F7F7;
-}
+QToolButton:hover {{
+    background-color: {BACKGROUND};
+}}
 
-QToolButton:pressed {
-    background-color: #EAEAEA;
-}
+QToolButton:pressed {{
+    background-color: {PRESSED};
+}}
 
-QToolButton:disabled {
+QToolButton:disabled {{
     background-color: #F0F0F0;
     color: #A0A0A0;
-}
+}}
 """
 
-MFC_ADD_BUTTON = """
-QToolButton {
-    background-color: white;
+MFC_ADD_BUTTON = f"""
+QToolButton {{
+    background-color: {BUTTON};
     color: black;
-    border: 1px solid #D0D0D0;
+    border: 0px solid #D0D0D0;
     border-radius: 12px;
     padding-top: 10px;
     font-size: 22px;
     font-weight: bold;
-}
+}}
 
-QToolButton:hover {
-    background-color: #F7F7F7;
-}
+QToolButton:hover {{
+    background-color: {BACKGROUND};
+}}
 
-QToolButton:pressed {
-    background-color: #EAEAEA;
-}
+QToolButton:pressed {{
+    background-color: {PRESSED};
+}}
 
-QToolButton:disabled {
+QToolButton:disabled {{
     background-color: #F0F0F0;
     color: #A0A0A0;
-}
+}}
 """
 
 TABLE = f"""
