@@ -2,14 +2,13 @@ import os
 import pyqtgraph as pg
 from v3_styles import *
 from pyqtgraph import AxisItem
-from PyQt6.QtCore import Qt, QPointF, QSize
+from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QPushButton,
     QStackedWidget, QLabel, QButtonGroup,
     QLineEdit, QToolButton, QGraphicsPathItem,
-    QTableWidget, QTableWidgetItem, QMessageBox,
-    QFormLayout)
+    QTableWidget, QTableWidgetItem, QMessageBox)
 from PyQt6.QtGui import (
     QFont, QPainterPath, QFontDatabase, QIcon)
 
@@ -158,6 +157,8 @@ class TimeInput(QWidget):
         self.time = QLineEdit()
         self.time.setInputMask("00:00")
 
+        self.time.setStyleSheet(LINE_EDIT)
+
         self.am = QToolButton()
         self.pm = QToolButton()
 
@@ -204,7 +205,6 @@ class FlowInput(QWidget):
         layout.addWidget(self.slpm_unit)
         layout.addStretch()
         layout.setContentsMargins(0, 0, 0, 0)
-
 
 class ChamberWindow(QWidget):
     def __init__(self, chamber):
@@ -284,9 +284,7 @@ class MFCWindow(QWidget):
         self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc = mfc
 
-        self.task_count = 0
         self.task_boxes = []
-        self.task_table = QTableWidget()
         self.graph = self.create_plot()
 
         layout = QVBoxLayout(self)
@@ -330,7 +328,6 @@ class MFCWindow(QWidget):
     def load_tasks(self):
         for task in self.mfc.tasks:
             self.add_task_to_ui(task)
-
     
     def create_header(self):
         header_layout = QHBoxLayout()
@@ -388,9 +385,7 @@ class MFCWindow(QWidget):
         title = QLabel("Create Task")
         title.setStyleSheet(PAGE_TITLE)
         self.start_row = TimeInput("Start")
-        self.start_row.setStyleSheet(LINE_EDIT)
         self.stop_row = TimeInput("Stop")
-        self.stop_row.setStyleSheet(LINE_EDIT)
         self.slpm_row = FlowInput("Flow")
         self.task_button = self.create_task_button()
         left_layout.setContentsMargins(40, 0, 20, 0)
@@ -454,27 +449,6 @@ class MFCWindow(QWidget):
         right_layout.addWidget(self.delete_button)
 
         return right_layout
-
-    def create_slpm(self):
-
-        slpm_row = QHBoxLayout()
-
-        self.slpm_unit = QLabel("SLPM")
-        self.slpm_label = QLabel("Flow")
-        self.slpm_input = QLineEdit()
-        
-        self.slpm_input.setInputMask("00.00")
-        self.slpm_input.setMaximumWidth(60)
-
-
-        slpm_row.addWidget(self.slpm_label)
-        slpm_row.addWidget(self.slpm_input)
-        slpm_row.addWidget(self.slpm_unit)
-        slpm_row.addStretch()
-
-        self.slpm_row.setStyleSheet(LINE_EDIT)
-        
-        return slpm_row
 
     def create_task_button(self):
 
@@ -795,4 +769,3 @@ def main():
     app.exec()
 
 main()
-
