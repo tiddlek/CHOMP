@@ -125,7 +125,7 @@ class MFC:
     def __init__(self, name):
         self.name = name
         self.tasks = []
-        self.color = "#"
+        self.wire = ""
 
     def add_task(self, task):
         self.tasks.append(task)
@@ -133,17 +133,6 @@ class MFC:
     def delete_task(self, index):
         if 0 <= index < len(self.tasks):
             del self.tasks[index]
-
-    def plot(self):
-        """
-        Later:
-        x-axis = time
-        y-axis = flow rate
-
-        Build step-function from tasks and
-        draw on pyqtgraph.
-        """
-        pass
 
 class Chamber:
     def __init__(self, name):
@@ -192,6 +181,7 @@ class TimeInput(QWidget):
         layout.addWidget(self.time)
         layout.addWidget(self.am)
         layout.addWidget(self.pm)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addStretch()
 
 class FlowInput(QWidget):
@@ -213,6 +203,8 @@ class FlowInput(QWidget):
         layout.addWidget(self.time)
         layout.addWidget(self.slpm_unit)
         layout.addStretch()
+        layout.setContentsMargins(0, 0, 0, 0)
+
 
 class ChamberWindow(QWidget):
     def __init__(self, chamber):
@@ -299,10 +291,15 @@ class MFCWindow(QWidget):
 
         layout = QVBoxLayout(self)
 
-        top_layout = QHBoxLayout()
+        middle_layout = QHBoxLayout()
+        middle_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.left = self.create_left()
         self.right = self.create_right()
+        self.header = self.create_header()
+
+        header_widget = QWidget()
+        header_widget.setLayout(self.header)
 
         left_widget = QWidget()
         left_widget.setLayout(self.left)
@@ -310,20 +307,36 @@ class MFCWindow(QWidget):
         right_widget = QWidget()
         right_widget.setLayout(self.right)
 
-        top_layout.addWidget(left_widget, 1)
-        top_layout.addWidget(right_widget, 1)
+        layout.addWidget(header_widget)
+        middle_layout.addWidget(left_widget, 1)
+        middle_layout.addWidget(right_widget, 1)
        
-        layout.addLayout(top_layout)
+        layout.addSpacing(20)
+        layout.addLayout(middle_layout)
 
         layout.addSpacing(50)
 
         layout.addWidget(self.graph)
-
-    def create_left(self):    
         
-        left_layout = QVBoxLayout()
+        if self.mfc.wire == 1:
+            self.mfc1.setChecked(True)
+        elif self.mfc.wire == 2:
+            self.mfc2.setChecked(True)
+        elif self.mfc.wire == 3:
+            self.mfc3.setChecked(True)
+        
+        self.load_tasks()
+
+    def load_tasks(self):
+        for task in self.mfc.tasks:
+            self.add_task_to_ui(task)
+
+    
+    def create_header(self):
+        header_layout = QHBoxLayout()
         title = QLabel(self.mfc.name)
         title.setStyleSheet(PAGE_TITLE)
+        header_layout.setContentsMargins(40, 40, 0, 0)
 
         self.mfc1 = QPushButton("1")
         self.mfc2 = QPushButton("2")
@@ -341,6 +354,18 @@ class MFCWindow(QWidget):
         self.mfc2.setStyleSheet(WIRE_BUTTON)
         self.mfc3.setStyleSheet(WIRE_BUTTON)
 
+        self.mfc1.clicked.connect(lambda: self.set_wire(1))
+        self.mfc2.clicked.connect(lambda: self.set_wire(2))
+        self.mfc3.clicked.connect(lambda: self.set_wire(3))
+
+        if self.mfc.wire == 1:
+            self.mfc1.setChecked(True)
+        elif self.mfc.wire == 2:
+            self.mfc2.setChecked(True)
+        elif self.mfc.wire == 3:
+            self.mfc3.setChecked(True)
+
+
         self.mfc_group = QButtonGroup(self)
         self.mfc_group.setExclusive(True)
 
@@ -348,24 +373,30 @@ class MFCWindow(QWidget):
         self.mfc_group.addButton(self.mfc2)
         self.mfc_group.addButton(self.mfc3)
 
+        header_layout.addWidget(title)
+        header_layout.addSpacing(10)
+        header_layout.addWidget(self.mfc1)
+        header_layout.addWidget(self.mfc2)
+        header_layout.addWidget(self.mfc3)
+        header_layout.addStretch()
+
+        return header_layout
+
+    def create_left(self):    
+        
+        left_layout = QVBoxLayout()
+        title = QLabel("Create Task")
+        title.setStyleSheet(PAGE_TITLE)
         self.start_row = TimeInput("Start")
         self.start_row.setStyleSheet(LINE_EDIT)
         self.stop_row = TimeInput("Stop")
         self.stop_row.setStyleSheet(LINE_EDIT)
         self.slpm_row = FlowInput("Flow")
         self.task_button = self.create_task_button()
-        left_layout.setContentsMargins(40, 20, 20, 0)
-        title_row = QHBoxLayout()
-        title_row.addWidget(title)
-        title_row.addSpacing(10)
-        title_row.addWidget(self.mfc1)
-        title_row.addWidget(self.mfc2)
-        title_row.addWidget(self.mfc3)
-        title_row.addStretch()
-
-        left_layout.addLayout(title_row)
+        left_layout.setContentsMargins(40, 0, 20, 0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        left_layout.addSpacing(10)
+
+        left_layout.addWidget(title)
         left_layout.addWidget(self.start_row)
         left_layout.addWidget(self.stop_row)
         left_layout.addWidget(self.slpm_row)
@@ -374,18 +405,22 @@ class MFCWindow(QWidget):
         left_layout.addWidget(self.task_button)
 
         return left_layout
+    
+    def set_wire(self, wire):
+        self.mfc.wire = wire
 
     def create_right(self):
         
         right_layout = QVBoxLayout()
+        right_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         title = QLabel("Task List")
         title.setStyleSheet(PAGE_TITLE)
 
         self.task_table = QTableWidget()
-        self.task_table.setColumnCount(4)
+        self.task_table.setColumnCount(3)
         self.task_table.setHorizontalHeaderLabels(
-            ["Device", "Start", "Stop", "SLPM"]
+            ["Start", "Stop", "SLPM"]
         )
 
         self.task_table.setFixedSize(336, 120)
@@ -393,10 +428,9 @@ class MFCWindow(QWidget):
 
         self.task_table.setStyleSheet(TABLE)
 
-        self.task_table.setColumnWidth(0, 83)   # Task
-        self.task_table.setColumnWidth(1, 83)   # Start
-        self.task_table.setColumnWidth(2, 83)   # Stop
-        self.task_table.setColumnWidth(3, 83)   # SLPM
+        self.task_table.setColumnWidth(0, 110)   # Start
+        self.task_table.setColumnWidth(1, 110)   # Stop
+        self.task_table.setColumnWidth(2, 112)   # SLPM
         self.task_table.verticalHeader().setVisible(False)
         self.task_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.task_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
@@ -409,7 +443,8 @@ class MFCWindow(QWidget):
 
         self.delete_button.setStyleSheet(ACTION_BUTTON)
 
-        right_layout.setContentsMargins(40,20,40,0)
+        right_layout.setContentsMargins(20,0,40,0)
+        right_layout.addStretch()
         right_layout.addWidget(title)
         right_layout.addWidget(self.task_table)
 
@@ -437,7 +472,7 @@ class MFCWindow(QWidget):
         slpm_row.addWidget(self.slpm_unit)
         slpm_row.addStretch()
 
-        self.slpm_input.setStyleSheet(LINE_EDIT)
+        self.slpm_row.setStyleSheet(LINE_EDIT)
         
         return slpm_row
 
@@ -564,8 +599,15 @@ class MFCWindow(QWidget):
         row = self.task_table.currentRow()
 
         if row >= 0:
+            # 1. remove from model FIRST
+            if 0 <= row < len(self.mfc.tasks):
+                self.mfc.delete_task(row)
+
+            # 2. remove graph item
             box = self.task_boxes.pop(row)
             self.graph.removeItem(box)
+
+            # 3. remove table row
             self.task_table.removeRow(row)
 
     def add_task(self):
@@ -582,7 +624,7 @@ class MFCWindow(QWidget):
                 self.stop_row.time.text(),
                 stop_pm
             )
-            flow = float(self.slpm_input.text())
+            flow = float(self.slpm_row.time.text())
 
             if start >= stop:
                 raise ValueError("Start must be before stop")
@@ -591,14 +633,7 @@ class MFCWindow(QWidget):
             QMessageBox.warning(self, "Invalid Input", str(e))
             return
         
-        number_text = ""
-        if self.mfc1.isChecked():
-            number_text += "1"
-        elif self.mfc2.isChecked():
-            number_text += "2"
-        elif self.mfc3.isChecked():
-            number_text += "3"
-        else:
+        if not self.mfc1.isChecked() and not self.mfc2.isChecked() and not self.mfc3.isChecked():
             QMessageBox.warning(
                 self,
                 "No Wire Selected",
@@ -606,29 +641,37 @@ class MFCWindow(QWidget):
             )
             return
 
-        row = self.task_table.rowCount()
-        self.task_table.insertRow(row)
 
 
+        task = MFCTask(
+            flow_rate=flow,
+            start_time=start,
+            stop_time=stop
+        )
 
-        self.task_table.setItem(row, 0, QTableWidgetItem(number_text))
-        self.task_table.setItem(row, 1, QTableWidgetItem(self.format_time(start)))
-        self.task_table.setItem(row, 2, QTableWidgetItem(self.format_time(stop)))
-        self.task_table.setItem(row, 3, QTableWidgetItem(str(flow)))
+        self.mfc.add_task(task)
+        self.add_task_to_ui(task)
 
-        
+        self.start_row.time.clear()
+        self.stop_row.time.clear()
+        self.slpm_row.time.clear()
 
-        width = stop - start
-        center = start + width / 2
+        self.start_row.am.setChecked(True)
+        self.stop_row.am.setChecked(True)
+
+    def draw_task_box(self, task):
+
+        width = task.stop_time - task.start_time
+        center = task.start_time + width / 2
 
         path = QPainterPath()
         path.addRoundedRect(
-            center - width/2,       # x
-            0.05,                   # y
-            width,                  # width
-            flow-0.05,              # height
-            0.3,                    # x radius
-            0.3                     # y radius
+            center - width/2,
+            0.05,
+            width,
+            task.flow_rate - 0.05,
+            0.3,
+            0.3
         )
 
         box = QGraphicsPathItem(path)
@@ -638,6 +681,35 @@ class MFCWindow(QWidget):
 
         self.graph.addItem(box)
         self.task_boxes.append(box)
+
+        return box
+
+    def add_task_to_ui(self, task):
+        row = self.task_table.rowCount()
+        self.task_table.insertRow(row)
+
+        self.task_table.setItem(
+            row, 0,
+            QTableWidgetItem(
+                self.format_time(task.start_time)
+            )
+        )
+
+        self.task_table.setItem(
+            row, 1,
+            QTableWidgetItem(
+                self.format_time(task.stop_time)
+            )
+        )
+
+        self.task_table.setItem(
+            row, 2,
+            QTableWidgetItem(
+                str(task.flow_rate)
+            )
+        )
+
+        self.draw_task_box(task)
 
 class ChambersPage(QWidget):
     def __init__(self):

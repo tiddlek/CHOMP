@@ -185,7 +185,7 @@ QHeaderView::section {{
 
 QTableWidget::item:selected {{
     background-color: {BLUE};
-    color: black;
+    color: white;
 }}
 """
 
