@@ -207,11 +207,12 @@ class FlowInput(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
 class ChamberWindow(QWidget):
-    def __init__(self, chamber):
+    def __init__(self, chamber, button):
         super().__init__()
         self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc_windows = []
         self.chamber = chamber
+        self.button = button
 
         self.setWindowTitle(chamber.name)
         self.resize(900,700)
@@ -244,6 +245,10 @@ class ChamberWindow(QWidget):
         layout.addLayout(self.line3)
         layout.addStretch()
 
+    def closeEvent(self, event):
+        self.button.setEnabled(True)
+        event.accept()
+
     def create_mfc_button(self, mfc):
         btn = QToolButton()
         btn.setText(mfc.name)
@@ -257,7 +262,7 @@ class ChamberWindow(QWidget):
         btn.setStyleSheet(MFC_BUTTON)
 
         btn.clicked.connect(
-            lambda _, m=mfc: self.open_mfc(m)
+            lambda _, m=mfc, b=self.button: self.open_mfc(m, b)
         )
 
         self.line3.insertWidget(
@@ -273,16 +278,19 @@ class ChamberWindow(QWidget):
 
         self.create_mfc_button(mfc)
 
-    def open_mfc(self, mfc):
-        win = MFCWindow(mfc)
+    def open_mfc(self, mfc, button):
+        win = MFCWindow(mfc, button)
         self.mfc_windows.append(win)
+
+        button.setEnabled(False)
         win.show()
 
 class MFCWindow(QWidget):
-    def __init__(self, mfc):
+    def __init__(self, mfc, button):
         super().__init__()
         self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc = mfc
+        self.button = button
 
         self.task_boxes = []
         self.graph = self.create_plot()
@@ -324,6 +332,10 @@ class MFCWindow(QWidget):
             self.mfc3.setChecked(True)
         
         self.load_tasks()
+
+    def closeEvent(self, event):
+        self.button.setEnabled(True)
+        event.accept()
 
     def load_tasks(self):
         for task in self.mfc.tasks:
@@ -728,16 +740,17 @@ class ChambersPage(QWidget):
         btn.setFixedSize(300, 450)
         btn.setStyleSheet(CHAMBER_BUTTON)
 
-        btn.clicked.connect(lambda _, c=chamber: self.open_chamber(c))
+        btn.clicked.connect(lambda _, c=chamber, b=btn: self.open_chamber(c, b))
 
         self.chamber_layout.insertWidget(
             self.chamber_layout.count() - 1,
             btn
         )
 
-    def open_chamber(self, chamber):
-        win = ChamberWindow(chamber)
+    def open_chamber(self, chamber, button):
+        win = ChamberWindow(chamber, button)
         self.windows.append(win)
+        button.setEnabled(False) 
         win.show()
 
 class ReagentsPage(QWidget):

@@ -56,8 +56,7 @@ QToolButton:pressed {{
 }}
 
 QToolButton:disabled {{
-    background-color: #F0F0F0;
-    color: #A0A0A0;
+    background-color: {PRESSED};
 }}
 """
 
@@ -142,8 +141,7 @@ QToolButton:pressed {{
 }}
 
 QToolButton:disabled {{
-    background-color: #F0F0F0;
-    color: #A0A0A0;
+    background-color: {PRESSED};
 }}
 """
 
