@@ -26,6 +26,7 @@ class MainWindow(QMainWindow):
 
         self.elapsed_seconds = 0
         self.is_running = False
+        self.scheduler = TaskScheduler()
 
     def setup_window(self):
         
@@ -125,10 +126,13 @@ class MainWindow(QMainWindow):
     def reset_timer(self):
         self.elapsed_seconds = 0
         self.update_display()
+        self.scheduler.reset()
 
     def update_stopwatch(self):
-        self.elapsed_seconds += 1
-        self.update_display()
+            self.elapsed_seconds += 1
+            self.update_display()
+
+            self.scheduler.update(self.elapsed_seconds)
 
     def update_display(self):
         hrs = self.elapsed_seconds // 3600
@@ -160,6 +164,7 @@ class MFCTask:
         self.flow_rate = flow_rate
         self.start_time = start_time
         self.stop_time = stop_time
+        self.active = False
 
     def set_start(self, start_time):
         self.start_time = start_time
@@ -208,7 +213,7 @@ class TimeInput(QWidget):
 
         self.time.setStyleSheet(LINE_EDIT)
 
-        self.units = QLabel("min")
+        self.units = QLabel("sec")
 
         layout.addWidget(self.label)
         layout.addWidget(self.time)
@@ -236,12 +241,13 @@ class FlowInput(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
 class ChamberWindow(QWidget):
-    def __init__(self, chamber, button):
+    def __init__(self, chamber, button, scheduler):
         super().__init__()
         self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc_windows = []
         self.chamber = chamber
         self.button = button
+        self.scheduler = scheduler
 
         self.setWindowTitle(chamber.name)
         self.resize(900,700)
@@ -304,22 +310,24 @@ class ChamberWindow(QWidget):
 
         mfc = MFC(f"MFC {self.chamber.mfc_count}")
         self.chamber.add_mfc(mfc)
+        self.window().scheduler.add_mfc(mfc)
 
         self.create_mfc_button(mfc)
 
     def open_mfc(self, mfc, button):
-        win = MFCWindow(mfc, button)
+        win = MFCWindow(mfc, button, self.scheduler)
         self.mfc_windows.append(win)
 
         button.setEnabled(False)
         win.show()
 
 class MFCWindow(QWidget):
-    def __init__(self, mfc, button):
+    def __init__(self, mfc, button, scheduler):
         super().__init__()
         self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc = mfc
         self.button = button
+        self.scheduler = scheduler
 
         self.task_boxes = []
         self.graph = self.create_plot()
@@ -361,6 +369,14 @@ class MFCWindow(QWidget):
             self.mfc3.setChecked(True)
         
         self.load_tasks()
+    
+     
+    def set_wire(self, wire):
+        try:
+            self.scheduler.register_mfc_wire(self.mfc, wire)
+        except ValueError as e:
+            QMessageBox.warning(self, "Wire Conflict", str(e))
+            return
 
     def closeEvent(self, event):
         self.button.setEnabled(True)
@@ -392,10 +408,6 @@ class MFCWindow(QWidget):
         self.mfc2.setStyleSheet(WIRE_BUTTON)
         self.mfc3.setStyleSheet(WIRE_BUTTON)
 
-        self.mfc1.clicked.connect(lambda: self.set_wire(1))
-        self.mfc2.clicked.connect(lambda: self.set_wire(2))
-        self.mfc3.clicked.connect(lambda: self.set_wire(3))
-
         if self.mfc.wire == 1:
             self.mfc1.setChecked(True)
         elif self.mfc.wire == 2:
@@ -407,9 +419,11 @@ class MFCWindow(QWidget):
         self.mfc_group = QButtonGroup(self)
         self.mfc_group.setExclusive(True)
 
-        self.mfc_group.addButton(self.mfc1)
-        self.mfc_group.addButton(self.mfc2)
-        self.mfc_group.addButton(self.mfc3)
+        self.mfc_group.addButton(self.mfc1, 1)
+        self.mfc_group.addButton(self.mfc2, 2)
+        self.mfc_group.addButton(self.mfc3, 3)
+
+        self.mfc_group.idClicked.connect(self.set_wire)
 
         header_layout.addWidget(title)
         header_layout.addSpacing(10)
@@ -445,9 +459,6 @@ class MFCWindow(QWidget):
         left_layout.addWidget(self.task_button)
 
         return left_layout
-    
-    def set_wire(self, wire):
-        self.mfc.wire = wire
 
     def create_right(self):
         
@@ -556,7 +567,7 @@ class MFCWindow(QWidget):
         self.graph.getAxis("bottom").setPen("k")
 
         self.graph.setLabel("left", "SLPM")
-        self.graph.setLabel("bottom", "Time (minutes)")
+        self.graph.setLabel("bottom", "Time (seconds)")
 
         self.graph.setYRange(0, 10, padding=0)
         self.graph.setXRange(0, 120, padding=0)
@@ -601,7 +612,7 @@ class MFCWindow(QWidget):
                 raise ValueError("Start must be before stop")
 
         except ValueError as e:
-            QMessageBox.warning(self, "Invalid Input", "Enter minutes in whole numbers")
+            QMessageBox.warning(self, "Invalid Input", "Enter seconds in whole numbers")
             return
         
         if not self.mfc1.isChecked() and not self.mfc2.isChecked() and not self.mfc3.isChecked():
@@ -737,7 +748,7 @@ class ChambersPage(QWidget):
         )
 
     def open_chamber(self, chamber, button):
-        win = ChamberWindow(chamber, button)
+        win = ChamberWindow(chamber, button, self.window().scheduler)
         self.windows.append(win)
         button.setEnabled(False) 
         win.show()
@@ -747,6 +758,54 @@ class ReagentsPage(QWidget):
         super().__init__()
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("Reagents"))
+
+class TaskScheduler:
+    def __init__(self):
+        self.mfcs = []
+        self.current_time = 0
+        self.running = False
+        self.wire_map = {}  # wire_id → mfc
+
+    def register_mfc_wire(self, mfc, wire_id):
+        # enforce uniqueness
+        if wire_id in self.wire_map:
+            raise ValueError(f"Wire {wire_id} already assigned to {self.wire_map[wire_id].name}")
+
+        # remove previous assignment if this MFC already had one
+        for w, existing_mfc in list(self.wire_map.items()):
+            if existing_mfc == mfc:
+                del self.wire_map[w]
+
+        self.wire_map[wire_id] = mfc
+        mfc.wire = wire_id
+
+    def add_mfc(self, mfc):
+        self.mfcs.append(mfc)
+
+    def reset(self):
+        self.current_time = 0
+        for mfc in self.mfcs:
+            for task in mfc.tasks:
+                task.active = False
+    
+    def update(self, current_time):
+        self.current_time = current_time
+
+        for wire_id, mfc in list(self.wire_map.items()):
+            for task in mfc.tasks:
+                if not task.active and task.start_time <= current_time < task.stop_time:
+                    task.active = True
+                    self.start_task(mfc, task)
+
+                if task.active and current_time >= task.stop_time:
+                    task.active = False
+                    self.stop_task(mfc, task)
+    
+    def start_task(self, mfc, task):
+        print(f"[START] {mfc.name} flow={task.flow_rate}")
+
+    def stop_task(self, mfc, task):
+        print(f"[STOP] {mfc.name}")
 
 def load_fonts():
     base_path = os.path.dirname(__file__)
