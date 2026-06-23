@@ -232,3 +232,82 @@ QToolButton:checked {{
     border: 1.5px solid {BLUE};
 }}
 """
+
+
+RUN_BUTTON = """
+    QPushButton {
+        background-color: transparent;
+        color: #22C55E;
+        border: 2px solid #22C55E;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 6px 12px;
+    }
+
+    QPushButton:hover {
+        background-color: #22C55E;
+        color: white;
+    }
+
+    QPushButton:pressed {
+        background-color: #16A34A;
+        border: 2px solid #16A34A;
+        color: white;
+    }"""
+
+RESET_BUTTON = """
+    QPushButton {
+        background-color: transparent;
+        color: #EF4444;
+        border: 2px solid #EF4444;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 6px 12px;
+    }
+
+    QPushButton:hover {
+        background-color: #EF4444;
+        color: white;
+    }
+
+    QPushButton:pressed {
+        background-color: #DC2626;
+        border: 2px solid #DC2626;
+        color: white;
+    }"""
+
+PAUSE_BUTTON = f"""
+    QPushButton {{
+        background-color: transparent;
+        color: #F59E0B;
+        border: 2px solid #F59E0B;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 6px 12px;
+    }}
+
+    QPushButton:hover {{
+        background-color: #F59E0B;
+        color: white;
+    }}
+
+    QPushButton:pressed {{
+        background-color: #D97706;
+        border: 2px solid #D97706;
+        color: white;
+    }}"""
+
+STOPWATCH = f"""
+    QLabel {{
+        background-color: transparent;
+        color: black;
+        border:2px solid black;
+        border-radius: 8px;
+        font-weight: Regular;
+        font-size: 20px;
+        padding: 6px 12px;
+
+    }}"""

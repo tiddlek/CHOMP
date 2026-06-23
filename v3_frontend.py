@@ -2,7 +2,7 @@ import os
 import pyqtgraph as pg
 from v3_styles import *
 from pyqtgraph import AxisItem
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, QTimer
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QPushButton,
@@ -20,6 +20,12 @@ class MainWindow(QMainWindow):
         self.create_pages()
         self.create_navbar()
         self.setup_layout()
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_stopwatch)
+
+        self.elapsed_seconds = 0
+        self.is_running = False
 
     def setup_window(self):
         
@@ -40,12 +46,31 @@ class MainWindow(QMainWindow):
         self.btn_2 = QPushButton("Chambers")
         self.btn_3 = QPushButton("Reagents")
 
+        self.run = QPushButton("Run")
+        self.reset = QPushButton("Reset")
+        self.pause = QPushButton("Pause")
+        self.stopwatch = QLabel("00:00:00")
+        
+        self.run.setStyleSheet(RUN_BUTTON)
+        self.reset.setStyleSheet(RESET_BUTTON)
+        self.stopwatch.setStyleSheet(STOPWATCH)
+        self.pause.setStyleSheet(PAUSE_BUTTON)
+
         self.nav_bar.addWidget(self.btn_1)
         self.nav_bar.addSpacing(60)
         self.nav_bar.addWidget(self.btn_2)
         self.nav_bar.addSpacing(30)
-
         self.nav_bar.addWidget(self.btn_3)
+        self.nav_bar.addSpacing(100)
+
+        self.nav_bar.addWidget(self.run)
+        self.nav_bar.addWidget(self.stopwatch)
+        self.nav_bar.addWidget(self.pause)
+        self.nav_bar.addWidget(self.reset)
+
+        self.run.clicked.connect(self.start_timer)
+        self.pause.clicked.connect(self.pause_timer)
+        self.reset.clicked.connect(self.reset_timer)
 
         self.btn_1.clicked.connect(lambda: self.stack.setCurrentIndex(0))
         self.btn_2.clicked.connect(lambda: self.stack.setCurrentIndex(1))
@@ -86,6 +111,31 @@ class MainWindow(QMainWindow):
     def setup_layout(self):
         self.main_layout.addLayout(self.nav_bar)
         self.main_layout.addWidget(self.stack)
+
+    def start_timer(self):
+        if not self.is_running:
+            self.timer.start(1000)  # 1 second
+            self.is_running = True
+
+    def pause_timer(self):
+        if self.is_running:
+            self.timer.stop()
+            self.is_running = False
+
+    def reset_timer(self):
+        self.elapsed_seconds = 0
+        self.update_display()
+
+    def update_stopwatch(self):
+        self.elapsed_seconds += 1
+        self.update_display()
+
+    def update_display(self):
+        hrs = self.elapsed_seconds // 3600
+        mins = (self.elapsed_seconds % 3600) // 60
+        secs = self.elapsed_seconds % 60
+
+        self.stopwatch.setText(f"{hrs:02d}:{mins:02d}:{secs:02d}")
 
 class HomePage(QWidget):
     def __init__(self):
@@ -599,8 +649,8 @@ class MFCWindow(QWidget):
             0.05,
             width,
             task.flow_rate - 0.05,
-            0.3,
-            0.3
+            0.4,
+            0.4
         )
 
         box = QGraphicsPathItem(path)
