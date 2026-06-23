@@ -155,33 +155,15 @@ class TimeInput(QWidget):
         self.label = QLabel(label_text)
 
         self.time = QLineEdit()
-        self.time.setInputMask("00:00")
 
         self.time.setStyleSheet(LINE_EDIT)
 
-        self.am = QToolButton()
-        self.pm = QToolButton()
-
-        self.am.setText("AM")
-        self.pm.setText("PM")
-
-        self.am.setCheckable(True)
-        self.pm.setCheckable(True)
-
-        group = QButtonGroup(self)
-        group.setExclusive(True)
-        group.addButton(self.am)
-        group.addButton(self.pm)
-
-        self.am.setChecked(True)
-
-        self.am.setStyleSheet(AM_PM)
-        self.pm.setStyleSheet(AM_PM)
+        self.units = QLabel("min")
 
         layout.addWidget(self.label)
         layout.addWidget(self.time)
-        layout.addWidget(self.am)
-        layout.addWidget(self.pm)
+        layout.addWidget(self.units)
+
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addStretch()
 
@@ -196,9 +178,6 @@ class FlowInput(QWidget):
         self.time = QLineEdit()
         self.time.setStyleSheet(LINE_EDIT)
         self.slpm_unit = QLabel("SLPM")
-
-        self.time.setInputMask("00.00")
-
     
         layout.addWidget(self.label)
         layout.addWidget(self.time)
@@ -404,8 +383,12 @@ class MFCWindow(QWidget):
         left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         left_layout.addWidget(title)
+        left_layout.addSpacing(6)
         left_layout.addWidget(self.start_row)
+        left_layout.addSpacing(6)
         left_layout.addWidget(self.stop_row)
+        left_layout.addSpacing(6)
+
         left_layout.addWidget(self.slpm_row)
 
         left_layout.addSpacing(5)
@@ -477,31 +460,35 @@ class MFCWindow(QWidget):
     def create_plot(self):
 
         slpm_axis = AxisItem(orientation="left")
+
         slpm_ticks = [
-            [(i, "") for i in range(0, 11)],          # minor ticks (no labels)
-            [(i, str(i)) for i in range(0, 11, 2)]    # major ticks (labels)
+            [(i, "") for i in range(0, 11)],
+            [(i, str(i)) for i in range(0, 11, 2)]
         ]
 
         time_axis = AxisItem(orientation="bottom")
+
         time_ticks = [
-        [(4,  "4:00"),
-        (8,  "8:00"),
-        (12, "12:00"),
-        (16, "4:00"),
-        (20, "8:00"),
-        (24, "12:00")],
-        [(i, "") for i in range(0, 25, 1)]
+            [(0, "0"),
+            (20, "20"),
+            (40, "40"),
+            (60, "60"),
+            (80, "80"),
+            (100, "100"),
+            (120, "120")],
+            [(i, "") for i in range(0, 121, 10)]
         ]
 
         slpm_axis.setTicks(slpm_ticks)
         time_axis.setTicks(time_ticks)
-        time_axis.setTickSpacing(4,4)
 
+        self.graph = pg.PlotWidget(
+            axisItems={
+                "left": slpm_axis,
+                "bottom": time_axis
+            }
+        )
 
-        self.graph = pg.PlotWidget(axisItems={
-            "left": slpm_axis,
-            "bottom": time_axis
-        })
 
         self.graph.getAxis("bottom").setStyle(
             tickLength=5,
@@ -519,10 +506,10 @@ class MFCWindow(QWidget):
         self.graph.getAxis("bottom").setPen("k")
 
         self.graph.setLabel("left", "SLPM")
-        self.graph.setLabel("bottom", "Time (hours)")
+        self.graph.setLabel("bottom", "Time (minutes)")
 
         self.graph.setYRange(0, 10, padding=0)
-        self.graph.setXRange(0, 24, padding=0)
+        self.graph.setXRange(0, 120, padding=0)
 
         self.graph.getViewBox().setDefaultPadding(0)
 
@@ -538,48 +525,6 @@ class MFCWindow(QWidget):
         self.graph.setMouseEnabled(x=False, y=False)
 
         return self.graph
-
-    def parse_time(self, t, is_pm):
-        h, m = t.split(":")
-
-        h = int(h)
-        m = int(m)
-
-        # validate 12-hour clock input
-        if not (1 <= h <= 12):
-            raise ValueError("Hour must be 1–12")
-
-        if not (0 <= m <= 59):
-            raise ValueError("Minutes must be 00–59")
-
-        # convert to 24-hour decimal
-        if is_pm and h != 12:
-            h += 12
-        if not is_pm and h == 12:
-            h = 0
-
-        return h + m / 60
-
-    def format_time(self, t):
-        """Convert decimal hours -> 'H:MM AM/PM'"""
-        h = int(t)
-        m = int(round((t - h) * 60))
-
-        if m == 60:
-            h += 1
-            m = 0
-
-        am_pm = "am"
-        display_h = h
-
-        if h >= 12:
-            am_pm = "pm"
-        if h > 12:
-            display_h = h - 12
-        if h == 0:
-            display_h = 12
-
-        return f"{display_h}:{m:02d} {am_pm}"
 
     def delete_task(self):
         row = self.task_table.currentRow()
@@ -598,32 +543,22 @@ class MFCWindow(QWidget):
 
     def add_task(self):
         try:
-            start_pm = self.start_row.pm.isChecked()
-            stop_pm = self.stop_row.pm.isChecked()
-
-            start = self.parse_time(
-                self.start_row.time.text(),
-                start_pm
-            )
-
-            stop = self.parse_time(
-                self.stop_row.time.text(),
-                stop_pm
-            )
+            start = int(self.start_row.time.text())
+            stop = int(self.stop_row.time.text())
             flow = float(self.slpm_row.time.text())
 
             if start >= stop:
                 raise ValueError("Start must be before stop")
 
         except ValueError as e:
-            QMessageBox.warning(self, "Invalid Input", str(e))
+            QMessageBox.warning(self, "Invalid Input", "Enter minutes in whole numbers")
             return
         
         if not self.mfc1.isChecked() and not self.mfc2.isChecked() and not self.mfc3.isChecked():
             QMessageBox.warning(
                 self,
                 "No Wire Selected",
-                "Select at least one Wire."
+                "Select a Wire."
             )
             return
 
@@ -642,8 +577,16 @@ class MFCWindow(QWidget):
         self.stop_row.time.clear()
         self.slpm_row.time.clear()
 
-        self.start_row.am.setChecked(True)
-        self.stop_row.am.setChecked(True)
+        max_stop = max(
+            (task.stop_time for task in self.mfc.tasks),
+            default=120
+        )
+
+        self.graph.setXRange(
+            0,
+            max(120, max_stop * 1.05),
+            padding=0
+        )
 
     def draw_task_box(self, task):
 
@@ -676,16 +619,12 @@ class MFCWindow(QWidget):
 
         self.task_table.setItem(
             row, 0,
-            QTableWidgetItem(
-                self.format_time(task.start_time)
-            )
+            QTableWidgetItem(str(task.start_time))
         )
 
         self.task_table.setItem(
             row, 1,
-            QTableWidgetItem(
-                self.format_time(task.stop_time)
-            )
+            QTableWidgetItem(str(task.stop_time))
         )
 
         self.task_table.setItem(

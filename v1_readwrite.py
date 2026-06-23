@@ -122,6 +122,15 @@ class SimpleApp(QWidget):
         except nidaqmx.DaqError as e:
             self.read_box.setText(f"DAQ Error: {e}")
 
+    def closeEvent(self, event):
+        self.timer.stop()
+
+        self.ai_task.close()
+        self.ao_task.close()
+        self.do_task.close()
+
+        event.accept()
+
 def main():
     #check = systemCheck()
     app = QApplication(sys.argv)
