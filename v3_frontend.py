@@ -2,6 +2,7 @@ import os
 import nidaqmx
 import pyqtgraph as pg
 from v3_styles import *
+from datetime import datetime
 from pyqtgraph import AxisItem
 from PyQt6.QtCore import Qt, QSize, QTimer
 from PyQt6.QtWidgets import (
@@ -125,10 +126,34 @@ class MainWindow(QMainWindow):
             self.timer.stop()
             self.is_running = False
 
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            hrs = self.elapsed_seconds // 3600
+            mins = (self.elapsed_seconds % 3600) // 60
+            secs = self.elapsed_seconds % 60
+
+            elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
+            print(
+                "[PAUSE] Timer pasued"
+                f"[{elapsedstamp}]"
+                f"[{timestamp}]"
+                )
+
     def reset_timer(self):
         self.elapsed_seconds = 0
         self.update_display()
         self.scheduler.reset()
+
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        hrs = self.elapsed_seconds // 3600
+        mins = (self.elapsed_seconds % 3600) // 60
+        secs = self.elapsed_seconds % 60
+
+        elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
+        print(
+            "[RESET] Timer reset"
+            f"[{elapsedstamp}]"
+            f"[{timestamp}]"
+            )
 
     def update_stopwatch(self):
             self.elapsed_seconds += 1
@@ -789,6 +814,7 @@ class TaskScheduler:
         
         self.ao_tasks = {}
 
+        """
         for wire in [1, 2, 3]:
             channel = f"Dev1/ao{wire-1}"
 
@@ -796,23 +822,20 @@ class TaskScheduler:
             task.ao_channels.add_ao_voltage_chan(channel)
 
             self.ao_tasks[wire] = task
-        
+        """
 
     def initialize_flows(self):
-        voltage = self.SAFE_SLPM / 10.0
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        hrs = self.current_time // 3600
+        mins = (self.current_time % 3600) // 60
+        secs = self.current_time % 60
+        elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
 
-        for wire_id, mfc in self.wire_map.items():
-            try:
-                self.ao_tasks[wire_id].write(voltage)
-
-                print(
-                    f"[INIT] {mfc.name} "
-                    f"set to {self.SAFE_SLPM:.2f} SLPM "
-                    f"(AO{wire_id-1}, {voltage:.3f} V)"
-                )
-
-            except nidaqmx.DaqError as e:
-                print(f"DAQ Error on {mfc.name}: {e}")
+        print(
+            f"[RUN]"
+            f"[{elapsedstamp}]"
+            f"[{timestamp}]"          
+        )
     
     def register_mfc_wire(self, mfc, wire_id):
         # enforce uniqueness
@@ -850,8 +873,11 @@ class TaskScheduler:
                     self.stop_task(mfc, task)
     
     def start_task(self, mfc, task):
-        print(f"[START] {mfc.name} flow={task.flow_rate}")
-
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        hrs = self.current_time // 3600
+        mins = (self.current_time % 3600) // 60
+        secs = self.current_time % 60
+        elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
         
         wire = mfc.wire
         slpm = max(0.0, min(task.flow_rate, 10.0))
@@ -859,10 +885,12 @@ class TaskScheduler:
         voltage = slpm / 10.0
 
         try:
-            self.ao_tasks[wire].write(voltage)
+            #self.ao_tasks[wire].write(voltage)
 
             print(
                 f"[START] {mfc.name} "
+                f"[{elapsedstamp}]"
+                f"[{timestamp}]"
                 f"flow={slpm:.2f} SLPM "
                 f"voltage={voltage:.3f} V"
                 f"channel=aO{wire-1} "
@@ -874,24 +902,29 @@ class TaskScheduler:
         
 
     def stop_task(self, mfc, task):
-        print(f"[STOP] {mfc.name}")
-        
+
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        hrs = self.current_time // 3600
+        mins = (self.current_time % 3600) // 60
+        secs = self.current_time % 60
+        elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
         
         wire = mfc.wire
         voltage = self.SAFE_SLPM / 10.0
 
         try:
-            self.ao_tasks[wire].write(voltage)
+            #self.ao_tasks[wire].write(voltage)
 
             print(
                 f"[STOP] {mfc.name} "
+                f"[{elapsedstamp}]"
+                f"[{timestamp}]"
                 f"set to safe flow {self.SAFE_SLPM:.2f} SLPM"
             )
 
         except nidaqmx.DaqError as e:
             print(f"DAQ Error: {e}")
         
-
 def load_fonts():
     base_path = os.path.dirname(__file__)
     font_dir = os.path.join(base_path, "Cantarell")
@@ -919,11 +952,9 @@ def main():
 
     app.exec()
 
-systemCheck()
+#systemCheck()
 main()
 
 # TODO delete chamber and delete mfc in headers
-# TODO pause and reset print statments
-# TODO time stamps
 # TODO create desktop shortcut
 # TODO refactor nidaqmx into a separate file (for frontend testing)
