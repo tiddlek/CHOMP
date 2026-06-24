@@ -1,3 +1,5 @@
+import logging
+
 class TaskScheduler:
     def __init__(self, daq_backend):
         self.mfcs = []
@@ -53,11 +55,11 @@ class TaskScheduler:
 
         self.daq.write_voltage(wire_id, voltage)
 
-        print(f"[START] {mfc.name} wire={wire_id} flow={slpm}")
+        logging.info(f"[START] {mfc.name} wire={wire_id} flow={slpm}")
 
     def stop_task(self, mfc, task, wire_id):
         voltage = self.SAFE_SLPM / 10.0
 
         self.daq.write_voltage(wire_id, voltage)
 
-        print(f"[STOP] {mfc.name} wire={wire_id}")
+        logging.info(f"[STOP] {mfc.name} wire={wire_id}")

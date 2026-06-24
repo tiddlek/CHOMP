@@ -1,5 +1,6 @@
 import os
 import nidaqmx
+import logging
 import pyqtgraph as pg
 from v3_styles import *
 from datetime import datetime
@@ -127,7 +128,7 @@ class MainWindow(QMainWindow):
             secs = self.scheduler.current_time % 60
             elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
 
-            print(
+            logging.info(
                 f"[RUN]"
                 f"[{elapsedstamp}]"
                 f"[{timestamp}]"          
@@ -146,7 +147,7 @@ class MainWindow(QMainWindow):
             secs = self.elapsed_seconds % 60
 
             elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
-            print(
+            logging.info(
                 "[PAUSE] Timer pasued"
                 f"[{elapsedstamp}]"
                 f"[{timestamp}]"
@@ -163,7 +164,7 @@ class MainWindow(QMainWindow):
         secs = self.elapsed_seconds % 60
 
         elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
-        print(
+        logging.info(
             "[RESET] Timer reset"
             f"[{elapsedstamp}]"
             f"[{timestamp}]"
@@ -282,10 +283,11 @@ class FlowInput(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
 class ChamberWindow(QWidget):
-    def __init__(self, chamber, button, scheduler):
+    def __init__(self, chamber, button, scheduler, chambers_page):
         super().__init__()
         self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc_windows = []
+        self.chambers_page = chambers_page
         self.chamber = chamber
         self.button = button
         self.scheduler = scheduler
@@ -294,6 +296,10 @@ class ChamberWindow(QWidget):
         self.resize(900,700)
 
         layout = QVBoxLayout(self)
+
+        top = QHBoxLayout()
+        delete = QPushButton("Delete Chamber")
+        delete.setStyleSheet(RESET_BUTTON)
 
         title1 = QLabel(self.chamber.name.upper())
         title1.setStyleSheet(PAGE_TITLE)
@@ -313,13 +319,51 @@ class ChamberWindow(QWidget):
         for mfc in self.chamber.mfcs:
             self.create_mfc_button(mfc)
 
+        self.line3.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(80, 60, 60, 30)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        layout.addWidget(title1)
+        
+        top.addWidget(title1)
+        top.addWidget(delete)
+        top.addStretch()
+
+        delete.clicked.connect(self.delete_chamber)
+
+        layout.addLayout(top)
         layout.addWidget(title2)
         layout.addWidget(title3)
         layout.addLayout(self.line3)
         layout.addStretch()
+
+    def delete_chamber(self):
+
+        reply = QMessageBox.question(
+            self,
+            "Delete Chamber",
+            f"Delete {self.chamber.name}?",
+            QMessageBox.StandardButton.Yes |
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        if self.chamber in self.chambers_page.chambers:
+            self.chambers_page.chambers.remove(self.chamber)
+        
+        for mfc in self.chamber.mfcs:
+            if mfc in self.scheduler.mfcs:
+                self.scheduler.mfcs.remove(mfc)
+
+            if mfc.wire in self.scheduler.wire_map:
+                del self.scheduler.wire_map[mfc.wire]
+        for win in self.mfc_windows:
+            win.close()
+
+        self.button.setParent(None)
+        self.button.deleteLater()
+
+        self.close()
 
     def closeEvent(self, event):
         self.button.setEnabled(True)
@@ -338,7 +382,7 @@ class ChamberWindow(QWidget):
         btn.setStyleSheet(MFC_BUTTON)
 
         btn.clicked.connect(
-            lambda _, m=mfc, b=self.button: self.open_mfc(m, b)
+            lambda _, m=mfc, b=btn: self.open_mfc(m, b)
         )
 
         self.line3.insertWidget(
@@ -356,17 +400,18 @@ class ChamberWindow(QWidget):
         self.create_mfc_button(mfc)
 
     def open_mfc(self, mfc, button):
-        win = MFCWindow(mfc, button, self.scheduler)
+        win = MFCWindow(mfc, button, self.scheduler, self)
         self.mfc_windows.append(win)
 
         button.setEnabled(False)
         win.show()
 
 class MFCWindow(QWidget):
-    def __init__(self, mfc, button, scheduler):
+    def __init__(self, mfc, button, scheduler, chamber_window):
         super().__init__()
         self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc = mfc
+        self.chamber_window = chamber_window
         self.button = button
         self.scheduler = scheduler
 
@@ -466,14 +511,35 @@ class MFCWindow(QWidget):
 
         self.mfc_group.idClicked.connect(self.set_wire)
 
+        delete = QPushButton("Delete MFC")
+        delete.setStyleSheet(RESET_BUTTON)
+        delete.clicked.connect(self.delete_mfc)
+
         header_layout.addWidget(title)
         header_layout.addSpacing(10)
         header_layout.addWidget(self.mfc1)
         header_layout.addWidget(self.mfc2)
         header_layout.addWidget(self.mfc3)
+        header_layout.addWidget(delete)
         header_layout.addStretch()
 
         return header_layout
+    
+    def delete_mfc(self):
+
+        if self.mfc.wire in self.scheduler.wire_map:
+            del self.scheduler.wire_map[self.mfc.wire]
+
+        if self.mfc in self.scheduler.mfcs:
+            self.scheduler.mfcs.remove(self.mfc)
+
+        if self.mfc in self.chamber_window.chamber.mfcs:
+            self.chamber_window.chamber.mfcs.remove(self.mfc)
+
+        self.chamber_window.line3.removeWidget(self.button)
+        self.button.deleteLater()
+
+        self.close()
 
     def create_left(self):    
         
@@ -805,7 +871,7 @@ class ChambersPage(QWidget):
         )
 
     def open_chamber(self, chamber, button):
-        win = ChamberWindow(chamber, button, self.window().scheduler)
+        win = ChamberWindow(chamber, button, self.window().scheduler, self)
         self.windows.append(win)
         button.setEnabled(False) 
         win.show()
@@ -831,9 +897,26 @@ def systemCheck():
     for device in system.devices:   
         print(device.name, device.product_type)
 
+def setup_logging():
+    os.makedirs("logs", exist_ok=True)
+
+    logfile = datetime.now().strftime(
+        "logs/chompv4.log"
+    )
+
+    logging.basicConfig(
+        filename=logfile,
+        level=logging.INFO,
+        format="%(asctime)s %(message)s",
+    )
+
+    logging.info("=== CHOMP Started ===")
+
 def main():
     app = QApplication([])
 
+    setup_logging()
+    
     load_fonts()
 
     app.setFont(QFont("Cantarell", 16))
@@ -846,6 +929,5 @@ def main():
 #systemCheck()
 main()
 
-# TODO delete chamber and delete mfc in headers
+# TODO wire #2 and #3
 # TODO create desktop shortcut
-# TODO refactor nidaqmx into a separate file (for frontend testing)
