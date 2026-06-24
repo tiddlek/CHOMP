@@ -116,6 +116,7 @@ class MainWindow(QMainWindow):
 
     def start_timer(self):
         if not self.is_running:
+            self.scheduler.initialize_flows()
             self.timer.start(1000)  # 1 second
             self.is_running = True
 
@@ -782,8 +783,10 @@ class TaskScheduler:
         self.current_time = 0
         self.running = False
         self.wire_map = {}  # wire_id → mfc
+        self.SAFE_SLPM = 3.5
 
-        """
+
+        
         self.ao_tasks = {}
 
         for wire in [1, 2, 3]:
@@ -793,8 +796,24 @@ class TaskScheduler:
             task.ao_channels.add_ao_voltage_chan(channel)
 
             self.ao_tasks[wire] = task
-        """
+        
 
+    def initialize_flows(self):
+        voltage = self.SAFE_SLPM / 10.0
+
+        for wire_id, mfc in self.wire_map.items():
+            try:
+                self.ao_tasks[wire_id].write(voltage)
+
+                print(
+                    f"[INIT] {mfc.name} "
+                    f"set to {self.SAFE_SLPM:.2f} SLPM "
+                    f"(AO{wire_id-1}, {voltage:.3f} V)"
+                )
+
+            except nidaqmx.DaqError as e:
+                print(f"DAQ Error on {mfc.name}: {e}")
+    
     def register_mfc_wire(self, mfc, wire_id):
         # enforce uniqueness
         if wire_id in self.wire_map:
@@ -833,14 +852,14 @@ class TaskScheduler:
     def start_task(self, mfc, task):
         print(f"[START] {mfc.name} flow={task.flow_rate}")
 
-        """
+        
         wire = mfc.wire
         slpm = max(0.0, min(task.flow_rate, 10.0))
 
         voltage = slpm / 10.0
 
         try:
-            self.ao_task[wire].write(voltage)
+            self.ao_tasks[wire].write(voltage)
 
             print(
                 f"[START] {mfc.name} "
@@ -852,28 +871,26 @@ class TaskScheduler:
         except nidaqmx.DaqError as e:
             print(f"DAQ Error: {e}")
         
-        """
+        
 
     def stop_task(self, mfc, task):
         print(f"[STOP] {mfc.name}")
         
-        """
+        
         wire = mfc.wire
-        SAFE_SLPM = 3.5
-
-        voltage = SAFE_SLPM / 10.0
+        voltage = self.SAFE_SLPM / 10.0
 
         try:
-            self.ao_task[wire].write(voltage)
+            self.ao_tasks[wire].write(voltage)
 
             print(
                 f"[STOP] {mfc.name} "
-                f"set to safe flow {SAFE_SLPM:.2f} SLPM"
+                f"set to safe flow {self.SAFE_SLPM:.2f} SLPM"
             )
 
         except nidaqmx.DaqError as e:
             print(f"DAQ Error: {e}")
-        """
+        
 
 def load_fonts():
     base_path = os.path.dirname(__file__)
@@ -884,6 +901,11 @@ def load_fonts():
 
     QFontDatabase.addApplicationFont(regular)
     QFontDatabase.addApplicationFont(bold)
+
+def systemCheck():
+    system = nidaqmx.system.System.local()
+    for device in system.devices:   
+        print(device.name, device.product_type)
 
 def main():
     app = QApplication([])
@@ -897,5 +919,6 @@ def main():
 
     app.exec()
 
+systemCheck()
 main()
 # TODO delete chamber and delete mfc in headers

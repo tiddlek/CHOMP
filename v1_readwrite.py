@@ -132,10 +132,10 @@ class SimpleApp(QWidget):
         event.accept()
 
 def main():
-    #check = systemCheck()
     app = QApplication(sys.argv)
     window = SimpleApp()
     window.show()
     sys.exit(app.exec())
 
+systemCheck()
 main()
