@@ -921,4 +921,9 @@ def main():
 
 systemCheck()
 main()
+
 # TODO delete chamber and delete mfc in headers
+# TODO pause and reset print statments
+# TODO time stamps
+# TODO create desktop shortcut
+# TODO refactor nidaqmx into a separate file (for frontend testing)
