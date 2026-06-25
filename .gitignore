@@ -6,3 +6,6 @@ venv/
 .DS_Store
 .vscode
 logs/
+build/
+dist/
+CHOMP.spec
