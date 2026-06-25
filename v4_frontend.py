@@ -1,4 +1,5 @@
 import os
+import sys
 import nidaqmx
 import logging
 import pyqtgraph as pg
@@ -17,6 +18,11 @@ from PyQt6.QtGui import (QFont, QPainterPath, QFontDatabase, QIcon)
 from v4_backend_daq import NI_DAQBackend
 from v4_backend_mock import MockDAQBackend
 from v4_scheduler import TaskScheduler
+
+def resource_path(relative_path):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -372,7 +378,7 @@ class ChamberWindow(QWidget):
     def create_mfc_button(self, mfc):
         btn = QToolButton()
         btn.setText(mfc.name)
-        btn.setIcon(QIcon("mfc.png"))
+        btn.setIcon(QIcon(resource_path("mfc.png")))
         btn.setIconSize(QSize(50, 50))
         btn.setToolButtonStyle(
             Qt.ToolButtonStyle.ToolButtonTextUnderIcon
@@ -857,7 +863,7 @@ class ChambersPage(QWidget):
 
         btn = QToolButton()
         btn.setText(f"Chamber {self.chamber_count}")
-        btn.setIcon(QIcon("chamber.png"))
+        btn.setIcon(QIcon(resource_path("chamber.png")))
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         btn.setIconSize(QSize(200, 200))
         btn.setFixedSize(300, 450)
@@ -883,11 +889,8 @@ class ReagentsPage(QWidget):
         layout.addWidget(QLabel("Reagents"))
         
 def load_fonts():
-    base_path = os.path.dirname(__file__)
-    font_dir = os.path.join(base_path, "Cantarell")
-
-    regular = os.path.join(font_dir, "Cantarell-Regular.ttf")
-    bold = os.path.join(font_dir, "Cantarell-Bold.ttf")
+    regular = resource_path("Cantarell/Cantarell-Regular.ttf")
+    bold = resource_path("Cantarell/Cantarell-Bold.ttf")
 
     QFontDatabase.addApplicationFont(regular)
     QFontDatabase.addApplicationFont(bold)
@@ -900,9 +903,7 @@ def systemCheck():
 def setup_logging():
     os.makedirs("logs", exist_ok=True)
 
-    logfile = datetime.now().strftime(
-        "logs/chompv4.log"
-    )
+    logfile = os.path.join("logs", "chomp.log")
 
     logging.basicConfig(
         filename=logfile,

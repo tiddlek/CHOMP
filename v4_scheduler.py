@@ -1,4 +1,5 @@
 import logging
+logger = logging.getLogger(__name__)
 
 class TaskScheduler:
     def __init__(self, daq_backend):

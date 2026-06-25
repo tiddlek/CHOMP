@@ -1,4 +1,5 @@
 import logging
+logger = logging.getLogger(__name__)
 
 class MockDAQBackend:
     def write_voltage(self, wire_id, voltage):
