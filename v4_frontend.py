@@ -38,8 +38,8 @@ class MainWindow(QMainWindow):
 
         self.elapsed_seconds = 0
         self.is_running = False
-        self.scheduler = TaskScheduler(MockDAQBackend())
-        #self.scheduler = TaskScheduler(NI_DAQBackend())
+        #self.scheduler = TaskScheduler(MockDAQBackend())
+        self.scheduler = TaskScheduler(NI_DAQBackend())
 
     def setup_window(self):
         
@@ -121,6 +121,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(HomePage())
         self.stack.addWidget(self.chambers_page)
         self.stack.addWidget(self.reagents_page)
+        self.stack.setCurrentIndex(0)
 
     def setup_layout(self):
         self.main_layout.addLayout(self.nav_bar)

@@ -40,11 +40,10 @@ CHAMBER_BUTTON =f"""
 QToolButton {{
     background-color: {BUTTON};
     color: black;
-    border: 0px solid #D0D0D0;
     border-radius: 12px;
     padding-top: 70px;
     font-size: 22px;
-    font-weight: regular;
+    font-weight: normal;
 }}
 
 QToolButton:hover {{
@@ -64,7 +63,6 @@ ADD_BUTTON = f"""
 QToolButton {{
     background-color: {BUTTON};
     color: black;
-    border: -0px solid #D0D0D0;
     border-radius: 12px;
     font-size: 22px;
     font-weight: bold;
@@ -125,7 +123,6 @@ MFC_BUTTON = f"""
 QToolButton {{
     background-color: {BUTTON};
     color: black;
-    border: 0px solid #D0D0D0;
     border-radius: 12px;
     padding-top: 10px;
     font-size: 22px;
@@ -149,7 +146,6 @@ MFC_ADD_BUTTON = f"""
 QToolButton {{
     background-color: {BUTTON};
     color: black;
-    border: 0px solid #D0D0D0;
     border-radius: 12px;
     padding-top: 10px;
     font-size: 22px;
@@ -217,7 +213,7 @@ QToolButton {{
     border-radius: 10px;
     padding: 4px 10px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: regular;
 }}
 
 QToolButton:!checked {{
