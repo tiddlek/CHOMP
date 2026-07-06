@@ -931,5 +931,5 @@ def main():
 #systemCheck()
 main()
 
-# TODO wire #2 and #3
-# TODO create desktop shortcut
+# TODO fully build on mac and windows
+# TODO turn logging into a new winodw when run clicked
