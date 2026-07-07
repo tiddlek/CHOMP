@@ -902,9 +902,15 @@ def systemCheck():
         print(device.name, device.product_type)
 
 def setup_logging():
-    os.makedirs("logs", exist_ok=True)
+    log_dir = os.path.join(
+        os.path.expanduser("~"),
+        "CHOMP",
+        "logs"
+    )
 
-    logfile = os.path.join("logs", "chomp.log")
+    os.makedirs(log_dir, exist_ok=True)
+
+    logfile = os.path.join(log_dir, "chomp.log")
 
     logging.basicConfig(
         filename=logfile,
