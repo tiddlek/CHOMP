@@ -937,5 +937,6 @@ def main():
 #systemCheck()
 main()
 
-# TODO fully build on mac and windows
 # TODO turn logging into a new winodw when run clicked
+# TODO injections page
+# TODO rebuild mac application with icons
