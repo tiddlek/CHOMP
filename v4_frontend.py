@@ -269,14 +269,23 @@ class Chamber:
     def __init__(self, name):
         self.name = name
         self.mfcs = []
+        self.pumps = []
+        self.pump_count = 0
         self.mfc_count = 0
 
     def add_mfc(self, mfc):
         self.mfcs.append(mfc)
+    
+    def add_pump(self, pump):
+        self.pumps.append(pump)
 
     def delete_mfc(self, index):
         if 0 <= index < len(self.mfcs):
             del self.mfcs[index]
+
+    def delete_pump(self, index):
+        if 0 <= index < len(self.pumps):
+            del self.pumps[index]
 
 class TimeInput(QWidget):
     def __init__(self, label_text):
@@ -328,7 +337,7 @@ class ChamberWindow(QWidget):
         self.scheduler = scheduler
 
         self.setWindowTitle(chamber.name)
-        self.resize(900,700)
+        self.resize(900,760)
 
         layout = QVBoxLayout(self)
 
@@ -338,6 +347,21 @@ class ChamberWindow(QWidget):
 
         title1 = QLabel(self.chamber.name.upper())
         title1.setStyleSheet(PAGE_TITLE)
+        
+        title0 = QLabel("Ozone Generator")
+        title0.setStyleSheet(PAGE_TITLE)
+        self.line0 = QHBoxLayout()
+        self.ozone_generator = QToolButton()
+        self.ozone_generator.setStyleSheet(MFC_BUTTON)
+        self.ozone_generator.setFixedSize(100, 100)
+        self.ozone_generator.setText("O\u2083")
+        self.line0.addWidget(self.ozone_generator)
+
+        self.ozone_generator.setIcon(QIcon(resource_path("ozone.png")))
+        self.ozone_generator.setIconSize(QSize(90, 90))
+        self.ozone_generator.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+        )
 
         title2 = QLabel("Lights")
         title2.setStyleSheet(PAGE_TITLE)
@@ -387,9 +411,15 @@ class ChamberWindow(QWidget):
         self.add_pump_btn.setFixedSize(100, 100)
         self.line4.addWidget(self.add_pump_btn)
 
+        self.add_pump_btn.clicked.connect(self.add_pump)
+
+        for pump in self.chamber.pumps:
+            self.create_pump_button(pump)
+
         for mfc in self.chamber.mfcs:
             self.create_mfc_button(mfc)
 
+        self.line0.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.line2.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.line3.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.line4.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -404,6 +434,8 @@ class ChamberWindow(QWidget):
         delete.clicked.connect(self.delete_chamber)
 
         layout.addLayout(top)
+        layout.addWidget(title0)
+        layout.addLayout(self.line0)
         layout.addWidget(title2)
         layout.addLayout(self.line2)
         layout.addWidget(title3)
@@ -467,6 +499,27 @@ class ChamberWindow(QWidget):
             btn
         )
 
+    def create_pump_button(self, pump):
+        btn = QToolButton()
+        btn.setText(pump.name)
+        btn.setIcon(QIcon(resource_path("syringe.png")))
+        btn.setIconSize(QSize(50, 50))
+        btn.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+        )
+
+        btn.setFixedSize(100, 100)
+        btn.setStyleSheet(MFC_BUTTON)
+
+        btn.clicked.connect(
+            lambda _, m=pump, b=btn: self.open_pump(m, b)
+        )
+
+        self.line4.insertWidget(
+            self.line4.count() - 1,
+            btn
+        )
+
     def add_mfc(self):
         self.chamber.mfc_count += 1
 
@@ -476,12 +529,24 @@ class ChamberWindow(QWidget):
 
         self.create_mfc_button(mfc)
 
+    def add_pump(self):
+        self.chamber.pump_count += 1
+
+        mfc = MFC(f"Pump {self.chamber.pump_count}")
+        self.chamber.add_pump(mfc)
+        self.window().scheduler.add_pump(mfc)
+
+        self.create_pump_button(mfc)
+
     def open_mfc(self, mfc, button):
         win = MFCWindow(mfc, button, self.scheduler, self)
         self.mfc_windows.append(win)
 
         button.setEnabled(False)
         win.show()
+    
+    def open_pump(self, mfc, button):
+        pass
 
 class MFCWindow(QWidget):
     def __init__(self, mfc, button, scheduler, chamber_window):
