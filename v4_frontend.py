@@ -38,8 +38,8 @@ class MainWindow(QMainWindow):
 
         self.elapsed_seconds = 0
         self.is_running = False
-        #self.scheduler = TaskScheduler(MockDAQBackend())
-        self.scheduler = TaskScheduler(NI_DAQBackend())
+        self.scheduler = TaskScheduler(MockDAQBackend())
+        #self.scheduler = TaskScheduler(NI_DAQBackend())
 
     def setup_window(self):
         
@@ -237,6 +237,34 @@ class MFC:
         if 0 <= index < len(self.tasks):
             del self.tasks[index]
 
+class PumpTask:
+    def __init__(self, flow, start, stop):
+        self.flow = flow
+        self.start = start
+        self.stop = stop
+        self.active = False
+    
+    def set_start(self, start_time):
+        self.start_time = start_time
+
+    def set_stop(self, stop_time):
+        self.stop_time = stop_time
+
+    def set_flow_rate(self, flow_rate):
+        self.flow_rate = flow_rate
+    
+class Pump:
+    def __init__(self, name, volume):
+        self.name = name
+        self.tasks = []
+    
+    def add_task(self, task):
+        self.tasks.append(task)
+    
+    def delete_task(self, index):
+        if 0 <= index < len(self.tasks):
+            del self.tasks[index]
+
 class Chamber:
     def __init__(self, name):
         self.name = name
@@ -313,6 +341,31 @@ class ChamberWindow(QWidget):
 
         title2 = QLabel("Lights")
         title2.setStyleSheet(PAGE_TITLE)
+        self.line2 = QHBoxLayout()
+        self.corner_lights = QToolButton()
+        self.corner_lights.setStyleSheet(MFC_BUTTON)
+        self.corner_lights.setFixedSize(100, 100)
+        self.corner_lights.setText("Corner")
+
+        self.line2.addWidget(self.corner_lights)
+
+        self.corner_lights.setIcon(QIcon(resource_path("corner.png")))
+        self.corner_lights.setIconSize(QSize(50, 50))
+        self.corner_lights.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+        )
+
+        self.middle_lights = QToolButton()
+        self.middle_lights.setStyleSheet(MFC_BUTTON)
+        self.middle_lights.setText("Middle")
+        self.middle_lights.setFixedSize(100, 100)
+        self.line2.addWidget(self.middle_lights)
+
+        self.middle_lights.setIcon(QIcon(resource_path("middle.png")))
+        self.middle_lights.setIconSize(QSize(50, 50))
+        self.middle_lights.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+        )
 
         title3 = QLabel("MFCs")
         title3.setStyleSheet(PAGE_TITLE)
@@ -323,10 +376,24 @@ class ChamberWindow(QWidget):
         self.add_mfc_btn.setFixedSize(100, 100)
         self.add_mfc_btn.clicked.connect(self.add_mfc)
         self.line3.addWidget(self.add_mfc_btn)
+
+        title4 = QLabel("Syringe Pumps")
+        title4.setStyleSheet(PAGE_TITLE)
+
+        self.line4 = QHBoxLayout()
+        self.add_pump_btn = QToolButton()
+        self.add_pump_btn.setStyleSheet(MFC_ADD_BUTTON)
+        self.add_pump_btn.setText("+\nPump")
+        self.add_pump_btn.setFixedSize(100, 100)
+        self.line4.addWidget(self.add_pump_btn)
+
         for mfc in self.chamber.mfcs:
             self.create_mfc_button(mfc)
 
+        self.line2.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.line3.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.line4.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
         layout.setContentsMargins(80, 60, 60, 30)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
@@ -338,8 +405,11 @@ class ChamberWindow(QWidget):
 
         layout.addLayout(top)
         layout.addWidget(title2)
+        layout.addLayout(self.line2)
         layout.addWidget(title3)
         layout.addLayout(self.line3)
+        layout.addWidget(title4)
+        layout.addLayout(self.line4)
         layout.addStretch()
 
     def delete_chamber(self):
@@ -938,5 +1008,6 @@ def main():
 main()
 
 # TODO turn logging into the second tab
+# TODO add lights to chambers
 # TODO add syringe pumps to chambers
 # TODO rebuild mac and windows 
