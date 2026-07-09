@@ -238,10 +238,10 @@ class MFC:
             del self.tasks[index]
 
 class PumpTask:
-    def __init__(self, flow, start, stop):
-        self.flow = flow
-        self.start = start
-        self.stop = stop
+    def __init__(self, flow_rate, start_time, stop_time):
+        self.flow_rate = flow_rate
+        self.start_time = start_time
+        self.stop_time = stop_time
         self.active = False
     
     def set_start(self, start_time):
@@ -318,7 +318,10 @@ class FlowInput(QWidget):
 
         self.time = QLineEdit()
         self.time.setStyleSheet(LINE_EDIT)
-        self.slpm_unit = QLabel("SLPM")
+        if label_text == "Flow":
+            self.slpm_unit = QLabel("SLPM")
+        elif label_text == "Rate":
+            self.slpm_unit = QLabel("\u00B5L/sec")
     
         layout.addWidget(self.label)
         layout.addWidget(self.time)
@@ -331,6 +334,7 @@ class ChamberWindow(QWidget):
         super().__init__()
         self.setStyleSheet(f"background-color: {BACKGROUND};")
         self.mfc_windows = []
+        self.pump_windows = []
         self.chambers_page = chambers_page
         self.chamber = chamber
         self.button = button
@@ -546,7 +550,11 @@ class ChamberWindow(QWidget):
         win.show()
     
     def open_pump(self, mfc, button):
-        pass
+        win = PumpWindow(mfc, button, self.scheduler, self)
+        self.pump_windows.append(win)
+
+        button.setEnabled(False)
+        win.show()
 
 class MFCWindow(QWidget):
     def __init__(self, mfc, button, scheduler, chamber_window):
@@ -556,6 +564,8 @@ class MFCWindow(QWidget):
         self.chamber_window = chamber_window
         self.button = button
         self.scheduler = scheduler
+
+        self.resize(800,760)
 
         self.task_boxes = []
         self.graph = self.create_plot()
@@ -962,6 +972,383 @@ class MFCWindow(QWidget):
 
         self.draw_task_box(task)
 
+class PumpWindow(QWidget):
+    def __init__(self, pump, button, scheduler, chamber_window):
+        super().__init__()
+        self.setStyleSheet(f"background-color: {BACKGROUND};")
+        self.pump = pump
+        self.chamber_window = chamber_window
+        self.button = button
+        self.scheduler = scheduler
+
+        self.resize(800,760)
+
+        self.task_boxes = []
+        self.graph = self.create_plot()
+
+        layout = QVBoxLayout(self)
+
+        middle_layout = QHBoxLayout()
+        middle_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        self.left = self.create_left()
+        self.right = self.create_right()
+        self.header = self.create_header()
+
+        header_widget = QWidget()
+        header_widget.setLayout(self.header)
+
+        left_widget = QWidget()
+        left_widget.setLayout(self.left)
+
+        right_widget = QWidget()
+        right_widget.setLayout(self.right)
+
+        layout.addWidget(header_widget)
+        middle_layout.addWidget(left_widget, 1)
+        middle_layout.addWidget(right_widget, 1)
+       
+        layout.addSpacing(20)
+        layout.addLayout(middle_layout)
+
+        layout.addSpacing(50)
+
+        layout.addWidget(self.graph)
+        
+        self.load_tasks()
+    
+    def closeEvent(self, event):
+        self.button.setEnabled(True)
+        event.accept()
+
+    def load_tasks(self):
+        for task in self.pump.tasks:
+            self.add_task_to_ui(task)
+    
+    def create_header(self):
+        header_layout = QHBoxLayout()
+        title = QLabel(self.pump.name)
+        title.setStyleSheet(PAGE_TITLE)
+        header_layout.setContentsMargins(40, 40, 0, 0)
+
+        delete = QPushButton("Delete Pump")
+        delete.setStyleSheet(RESET_BUTTON)
+        delete.clicked.connect(self.delete_pump)
+
+        header_layout.addWidget(title)
+        header_layout.addSpacing(10)
+        header_layout.addWidget(delete)
+        header_layout.addStretch()
+
+        return header_layout
+    
+    def delete_pump(self):
+
+        if self.pump in self.scheduler.pumps:
+            self.scheduler.pumps.remove(self.pump)
+
+        if self.pump in self.chamber_window.chamber.pumps:
+            self.chamber_window.chamber.pumps.remove(self.pump)
+
+        self.chamber_window.line3.removeWidget(self.button)
+        self.button.deleteLater()
+
+        self.close()
+
+    def create_left(self):    
+        
+        left_layout = QVBoxLayout()
+        title = QLabel("Create Task")
+        title.setStyleSheet(PAGE_TITLE)
+        self.start_row = TimeInput("Start")
+        self.stop_row = TimeInput("Stop")
+        self.slpm_row = FlowInput("Rate")
+        self.task_button = self.create_task_button()
+        left_layout.setContentsMargins(40, 0, 20, 0)
+        left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        self.volume = QLabel("Total Injection: Volume: ")
+
+        self.start_row.time.textChanged.connect(self.calculate)
+        self.stop_row.time.textChanged.connect(self.calculate)
+        self.slpm_row.time.textChanged.connect(self.calculate)
+
+        left_layout.addWidget(title)
+        left_layout.addSpacing(6)
+        left_layout.addWidget(self.start_row)
+        left_layout.addSpacing(6)
+        left_layout.addWidget(self.stop_row)
+        left_layout.addSpacing(6)
+
+        left_layout.addWidget(self.slpm_row)
+
+        left_layout.addSpacing(5)
+        left_layout.addWidget(self.volume)
+        left_layout.addWidget(self.task_button)
+
+  
+
+        return left_layout
+    
+    def calculate(self):
+            try:
+                start = float(self.start_row.time.text())
+                stop = float(self.stop_row.time.text())
+                rate = float(self.slpm_row.time.text())
+
+                if stop > start:
+                    duration = stop-start
+                    volume = duration * rate
+                    self.volume.setText(f"Total Injection: Volume: {volume:.3f} \u00B5L")
+                else:
+                    self.volume.setText("Total Injection: Volume: --")
+            except ValueError:
+                self.volume.setText("Total Injection: Volume: --")
+
+
+    def create_right(self):
+        
+        right_layout = QVBoxLayout()
+        right_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        title = QLabel("Task List")
+        title.setStyleSheet(PAGE_TITLE)
+
+        self.task_table = QTableWidget()
+        self.task_table.setColumnCount(3)
+        self.task_table.setHorizontalHeaderLabels(
+            ["Start", "Stop", "\u00B5L/sec"]
+        )
+
+        self.task_table.setFixedSize(336, 120)
+
+
+        self.task_table.setStyleSheet(TABLE)
+
+        self.task_table.setColumnWidth(0, 110)   # Start
+        self.task_table.setColumnWidth(1, 110)   # Stop
+        self.task_table.setColumnWidth(2, 112)   # SLPM
+        self.task_table.verticalHeader().setVisible(False)
+        self.task_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.task_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+
+        self.task_table.setStyleSheet(TABLE)
+
+        self.delete_button = QPushButton("Delete Task")
+        self.delete_button.setFixedHeight(30)
+        self.delete_button.clicked.connect(self.delete_task)
+
+        self.delete_button.setStyleSheet(ACTION_BUTTON)
+
+        right_layout.setContentsMargins(20,0,40,0)
+        right_layout.addStretch()
+        right_layout.addWidget(title)
+        right_layout.addWidget(self.task_table)
+
+        right_layout.addSpacing(5)
+
+
+        right_layout.addWidget(self.delete_button)
+
+        return right_layout
+
+    def create_task_button(self):
+
+        button = QPushButton("Add Task")
+
+        button.setFixedSize(270, 30)
+
+        button.setStyleSheet(ACTION_BUTTON)
+
+        button.clicked.connect(self.add_task)
+
+        return button
+
+    def create_plot(self):
+
+        slpm_axis = AxisItem(orientation="left")
+
+        slpm_ticks = [
+            [(i, "") for i in [0, 0.2, 0.4, 0.6, 0.8, 1.0]],
+            [(i, f"{i:.1f}") for i in [0, 0.2, 0.4, 0.6, 0.8, 1.0]]
+        ]
+
+        time_axis = AxisItem(orientation="bottom")
+
+        time_ticks = [
+            [(0, "0"),
+            (20, "20"),
+            (40, "40"),
+            (60, "60"),
+            (80, "80"),
+            (100, "100"),
+            (120, "120")],
+            [(i, "") for i in range(0, 121, 10)]
+        ]
+
+        slpm_axis.setTicks(slpm_ticks)
+        time_axis.setTicks(time_ticks)
+
+        self.graph = pg.PlotWidget(
+            axisItems={
+                "left": slpm_axis,
+                "bottom": time_axis
+            }
+        )
+
+
+        self.graph.getAxis("bottom").setStyle(
+            tickLength=5,
+            tickTextOffset=8
+        )
+
+        self.graph.getAxis("left").setStyle(
+            tickLength=5,
+            tickTextOffset=8
+        )
+
+        self.graph.setBackground(BACKGROUND)
+        self.graph.showGrid(x=False, y=False, alpha=1.0)
+        self.graph.getAxis("left").setPen("k")
+        self.graph.getAxis("bottom").setPen("k")
+
+        self.graph.setLabel("left", "\u00B5L/sec")
+        self.graph.setLabel("bottom", "Time (seconds)")
+
+        self.graph.setYRange(0, 1, padding=0)
+        self.graph.setXRange(0, 120, padding=0)
+
+        self.graph.getViewBox().setDefaultPadding(0)
+
+        self.graph.getPlotItem().layout.setContentsMargins(10, 10, 20, 20)
+
+        axis_pen = pg.mkPen(color="black", width=2)
+
+        time_axis.setPen(axis_pen)
+        slpm_axis.setPen(axis_pen)
+
+        self.graph.getAxis("left").setTextPen("k")
+        self.graph.getAxis("bottom").setTextPen("k")
+        self.graph.setMouseEnabled(x=False, y=False)
+
+        return self.graph
+
+    def delete_task(self):
+        row = self.task_table.currentRow()
+
+        if row >= 0:
+            # 1. remove from model FIRST
+            if 0 <= row < len(self.pump.tasks):
+                self.pump.delete_task(row)
+
+            # 2. remove graph item
+            box = self.task_boxes.pop(row)
+            self.graph.removeItem(box)
+
+            # 3. remove table row
+            self.task_table.removeRow(row)
+
+    def add_task(self):
+        try:
+            start = int(self.start_row.time.text())
+            stop = int(self.stop_row.time.text())
+            flow = float(self.slpm_row.time.text())
+
+            if flow < 0:
+                QMessageBox.warning(
+                    self,
+                    "Invalid Flow",
+                    "Flow cannot be negative."
+                )
+                return
+
+            if flow > 10:
+                QMessageBox.warning(
+                    self,
+                    "Invalid Flow",
+                    "Maximum flow is 10 SLPM."
+                )
+                return
+
+            if start >= stop:
+                raise ValueError("Start must be before stop")
+
+        except ValueError as e:
+            QMessageBox.warning(self, "Invalid Input", "Enter seconds in whole numbers")
+            return
+
+        task = PumpTask(
+            flow_rate=flow,
+            start_time=start,
+            stop_time=stop
+        )
+
+        self.pump.add_task(task)
+        self.add_task_to_ui(task)
+
+        self.start_row.time.clear()
+        self.stop_row.time.clear()
+        self.slpm_row.time.clear()
+
+        max_stop = max(
+            (task.stop_time for task in self.pump.tasks),
+            default=120
+        )
+
+        self.graph.setXRange(
+            0,
+            max(120, max_stop * 1.05),
+            padding=0
+        )
+
+    def draw_task_box(self, task):
+
+        width = task.stop_time - task.start_time
+        center = task.start_time + width / 2
+
+        path = QPainterPath()
+        path.addRoundedRect(
+            center - width/2,
+            0.005,
+            width,
+            task.flow_rate - 0.005,
+            0.2,
+            0.2
+        )
+
+        box = QGraphicsPathItem(path)
+
+        box.setBrush(pg.mkBrush(BLUE))
+        box.setPen(pg.mkPen(BACKGROUND, width=2))
+
+        self.graph.addItem(box)
+        self.task_boxes.append(box)
+
+        return box
+
+    def add_task_to_ui(self, task):
+        row = self.task_table.rowCount()
+        self.task_table.insertRow(row)
+
+        self.task_table.setItem(
+            row, 0,
+            QTableWidgetItem(str(task.start_time))
+        )
+
+        self.task_table.setItem(
+            row, 1,
+            QTableWidgetItem(str(task.stop_time))
+        )
+
+        self.task_table.setItem(
+            row, 2,
+            QTableWidgetItem(
+                str(task.flow_rate)
+            )
+        )
+
+        self.draw_task_box(task)
+
 class ChambersPage(QWidget):
     def __init__(self):
         super().__init__()
@@ -1076,3 +1463,4 @@ main()
 # TODO add lights to chambers
 # TODO add syringe pumps to chambers
 # TODO rebuild mac and windows 
+# TODO when run button is clicked create a pup up for experiment name, and export current data (ozone generator, lights, lights, all mofcs, all pumps)
