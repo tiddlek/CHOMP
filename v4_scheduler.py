@@ -8,6 +8,7 @@ class TaskScheduler:
         self.current_time = 0
         self.wire_map = {}
         self.SAFE_SLPM = 3.5
+        self.log_callback = None
 
         # dependency injection (important part)
         self.daq = daq_backend
@@ -31,8 +32,8 @@ class TaskScheduler:
     def add_mfc(self, mfc):
         self.mfcs.append(mfc)
 
-    def add_pump(self, mfc):
-        self.pumps.append(mfc)
+    def add_pump(self, pump):
+        self.pumps.append(pump)
 
     def reset(self):
         self.current_time = 0
@@ -60,11 +61,11 @@ class TaskScheduler:
 
         self.daq.write_voltage(wire_id, voltage)
 
-        logging.info(f"[START] {mfc.name} wire={wire_id} flow={slpm}")
+        logger.info(f"[START] {mfc.name} wire={wire_id} flow={slpm}")
 
     def stop_task(self, mfc, task, wire_id):
         voltage = self.SAFE_SLPM / 10.0
 
         self.daq.write_voltage(wire_id, voltage)
 
-        logging.info(f"[STOP] {mfc.name} wire={wire_id}")
+        logger.info(f"[STOP] {mfc.name} wire={wire_id}")

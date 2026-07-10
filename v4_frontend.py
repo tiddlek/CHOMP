@@ -12,17 +12,12 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QPushButton,
     QStackedWidget, QLabel, QButtonGroup,
     QLineEdit, QToolButton, QGraphicsPathItem,
-    QTableWidget, QTableWidgetItem, QMessageBox)
+    QTableWidget, QTableWidgetItem, QMessageBox, QPlainTextEdit)
 from PyQt6.QtGui import (QFont, QPainterPath, QFontDatabase, QIcon)
 
 from v4_backend_daq import NI_DAQBackend
 from v4_backend_mock import MockDAQBackend
 from v4_scheduler import TaskScheduler
-
-def resource_path(relative_path):
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -58,7 +53,7 @@ class MainWindow(QMainWindow):
 
         self.btn_1 = QPushButton("CHOMP")
         self.btn_2 = QPushButton("Chambers")
-        self.btn_3 = QPushButton("Reagents")
+        self.btn_3 = QPushButton("Log")
 
         self.run = QPushButton("Run")
         self.reset = QPushButton("Reset")
@@ -116,11 +111,11 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
 
         self.chambers_page = ChambersPage()
-        self.reagents_page = ReagentsPage()
+        self.log_page = LogPage()
 
         self.stack.addWidget(HomePage())
         self.stack.addWidget(self.chambers_page)
-        self.stack.addWidget(self.reagents_page)
+        self.stack.addWidget(self.log_page)
         self.stack.setCurrentIndex(0)
 
     def setup_layout(self):
@@ -1405,11 +1400,26 @@ class ChambersPage(QWidget):
         button.setEnabled(False) 
         win.show()
 
-class ReagentsPage(QWidget):
+class LogPage(QWidget):
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel("Reagents"))
+
+        layout.setContentsMargins(100, 30, 60, 30)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        title = QLabel("Log")
+        title.setStyleSheet(PAGE_TITLE)
+
+        self.log = QPlainTextEdit()
+        self.log.setReadOnly(True)
+
+        layout.addWidget(title)
+        layout.addWidget(self.log)
+
+    def append(self, message):
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.log.appendPlainText(f"[{timestamp}] {message}")
         
 def load_fonts():
     regular = resource_path("Cantarell/Cantarell-Regular.ttf")
@@ -1441,6 +1451,11 @@ def setup_logging():
     )
 
     logging.info("=== CHOMP Started ===")
+
+def resource_path(relative_path):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 def main():
     app = QApplication([])
