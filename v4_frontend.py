@@ -379,18 +379,6 @@ class ChamberWindow(QWidget):
             Qt.ToolButtonStyle.ToolButtonTextUnderIcon
         )
 
-        self.middle_lights = QToolButton()
-        self.middle_lights.setStyleSheet(MFC_BUTTON)
-        self.middle_lights.setText("Middle")
-        self.middle_lights.setFixedSize(100, 100)
-        self.line2.addWidget(self.middle_lights)
-
-        self.middle_lights.setIcon(QIcon(resource_path("middle.png")))
-        self.middle_lights.setIconSize(QSize(50, 50))
-        self.middle_lights.setToolButtonStyle(
-            Qt.ToolButtonStyle.ToolButtonTextUnderIcon
-        )
-
         title3 = QLabel("MFCs")
         title3.setStyleSheet(PAGE_TITLE)
         self.line3 = QHBoxLayout()
