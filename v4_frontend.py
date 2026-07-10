@@ -1,7 +1,6 @@
 import os
 import sys
 import nidaqmx
-import logging
 import pyqtgraph as pg
 from v3_styles import *
 from datetime import datetime
@@ -24,9 +23,6 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setup_window()
-        self.create_pages()
-        self.create_navbar()
-        self.setup_layout()
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_stopwatch)
@@ -36,6 +32,9 @@ class MainWindow(QMainWindow):
         self.scheduler = TaskScheduler(MockDAQBackend())
         #self.scheduler = TaskScheduler(NI_DAQBackend())
 
+        self.create_pages()
+        self.create_navbar()
+        self.setup_layout()
     def setup_window(self):
         
         self.setWindowTitle("CHOMP")
@@ -113,6 +112,8 @@ class MainWindow(QMainWindow):
         self.chambers_page = ChambersPage()
         self.log_page = LogPage()
 
+        self.scheduler.log_callback = self.log_page.append
+
         self.stack.addWidget(HomePage())
         self.stack.addWidget(self.chambers_page)
         self.stack.addWidget(self.log_page)
@@ -130,7 +131,7 @@ class MainWindow(QMainWindow):
             secs = self.scheduler.current_time % 60
             elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
 
-            logging.info(
+            self.scheduler.log(
                 f"[RUN]"
                 f"[{elapsedstamp}]"
                 f"[{timestamp}]"          
@@ -149,7 +150,7 @@ class MainWindow(QMainWindow):
             secs = self.elapsed_seconds % 60
 
             elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
-            logging.info(
+            self.scheduler.log(
                 "[PAUSE] Timer pasued"
                 f"[{elapsedstamp}]"
                 f"[{timestamp}]"
@@ -166,7 +167,7 @@ class MainWindow(QMainWindow):
         secs = self.elapsed_seconds % 60
 
         elapsedstamp = f"{hrs:02d}:{mins:02d}:{secs:02d}"
-        logging.info(
+        self.scheduler.log(
             "[RESET] Timer reset"
             f"[{elapsedstamp}]"
             f"[{timestamp}]"
@@ -365,17 +366,17 @@ class ChamberWindow(QWidget):
         title2 = QLabel("Lights")
         title2.setStyleSheet(PAGE_TITLE)
         self.line2 = QHBoxLayout()
-        self.corner_lights = QToolButton()
-        self.corner_lights.setStyleSheet(MFC_BUTTON)
-        self.corner_lights.setFixedSize(100, 100)
-        self.corner_lights.setText("h\u03BD")
+        self.lights = QToolButton()
+        self.lights.setStyleSheet(MFC_BUTTON)
+        self.lights.setFixedSize(100, 100)
+        self.lights.setText("h\u03BD")
         
 
-        self.line2.addWidget(self.corner_lights)
+        self.line2.addWidget(self.lights)
 
-        self.corner_lights.setIcon(QIcon(resource_path("corner.png")))
-        self.corner_lights.setIconSize(QSize(75, 75))
-        self.corner_lights.setToolButtonStyle(
+        self.lights.setIcon(QIcon(resource_path("lights.png")))
+        self.lights.setIconSize(QSize(75, 75))
+        self.lights.setToolButtonStyle(
             Qt.ToolButtonStyle.ToolButtonTextUnderIcon
         )
 
@@ -1422,25 +1423,6 @@ def systemCheck():
     for device in system.devices:   
         print(device.name, device.product_type)
 
-def setup_logging():
-    log_dir = os.path.join(
-        os.path.expanduser("~"),
-        "CHOMP",
-        "logs"
-    )
-
-    os.makedirs(log_dir, exist_ok=True)
-
-    logfile = os.path.join(log_dir, "chomp.log")
-
-    logging.basicConfig(
-        filename=logfile,
-        level=logging.INFO,
-        format="%(asctime)s %(message)s",
-    )
-
-    logging.info("=== CHOMP Started ===")
-
 def resource_path(relative_path):
     if hasattr(sys, "_MEIPASS"):
         return os.path.join(sys._MEIPASS, relative_path)
@@ -1448,8 +1430,6 @@ def resource_path(relative_path):
 
 def main():
     app = QApplication([])
-
-    setup_logging()
     
     load_fonts()
 

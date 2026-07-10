@@ -40,7 +40,7 @@ CHAMBER_BUTTON =f"""
 QToolButton {{
     background-color: {BUTTON};
     color: black;
-    border-radius: 12px;
+    border-radius: 8px;
     padding-top: 70px;
     font-size: 22px;
     font-weight: normal;
@@ -63,7 +63,7 @@ ADD_BUTTON = f"""
 QToolButton {{
     background-color: {BUTTON};
     color: black;
-    border-radius: 12px;
+    border-radius: 8px;
     font-size: 22px;
     font-weight: bold;
 }}
@@ -92,7 +92,7 @@ QLineEdit {
     min-width: 50px;
     max-width: 50px;
     border: 1px solid black;
-    border-radius: 4px;
+    border-radius: 2px;
     padding: 4px;
     letter-spacing: 1px;
     font-size: 14px;
@@ -123,7 +123,7 @@ MFC_BUTTON = f"""
 QToolButton {{
     background-color: {BUTTON};
     color: black;
-    border-radius: 12px;
+    border-radius: 4px;
     padding-top: 10px;
     font-size: 22px;
     font-weight: regular;
@@ -146,7 +146,7 @@ MFC_ADD_BUTTON = f"""
 QToolButton {{
     background-color: {BUTTON};
     color: black;
-    border-radius: 12px;
+    border-radius: 4px;
     padding-top: 10px;
     font-size: 22px;
     font-weight: bold;
