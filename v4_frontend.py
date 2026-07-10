@@ -368,12 +368,13 @@ class ChamberWindow(QWidget):
         self.corner_lights = QToolButton()
         self.corner_lights.setStyleSheet(MFC_BUTTON)
         self.corner_lights.setFixedSize(100, 100)
-        self.corner_lights.setText("Corner")
+        self.corner_lights.setText("h\u03BD")
+        
 
         self.line2.addWidget(self.corner_lights)
 
         self.corner_lights.setIcon(QIcon(resource_path("corner.png")))
-        self.corner_lights.setIconSize(QSize(50, 50))
+        self.corner_lights.setIconSize(QSize(75, 75))
         self.corner_lights.setToolButtonStyle(
             Qt.ToolButtonStyle.ToolButtonTextUnderIcon
         )
