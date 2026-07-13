@@ -5,6 +5,7 @@ class TaskScheduler:
     def __init__(self, daq_backend):
         self.mfcs = []
         self.pumps = []
+        self.lights = []
         self.current_time = 0
         self.wire_map = {}
         self.SAFE_SLPM = 3.5
@@ -35,6 +36,9 @@ class TaskScheduler:
 
     def add_pump(self, pump):
         self.pumps.append(pump)
+    
+    def add_light(self, light):
+        self.lights.append(light)
 
     def reset(self):
         self.current_time = 0
