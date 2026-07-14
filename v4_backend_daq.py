@@ -15,3 +15,13 @@ class NI_DAQBackend:
             raise ValueError(f"No DAQ channel for wire {wire_id}")
 
         self.tasks[wire_id].write(voltage)
+    
+    def write_lights(self, config):
+        if config == "c":
+            pass
+        elif config == "m":
+            pass
+        pass
+
+    def write_ozone(self):
+        pass

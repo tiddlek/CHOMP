@@ -140,6 +140,10 @@ QToolButton:pressed {{
 QToolButton:disabled {{
     background-color: {PRESSED};
 }}
+
+QToolButton:checked {{
+    background-color: {PRESSED};
+}}
 """
 
 MFC_ADD_BUTTON = f"""
@@ -306,3 +310,56 @@ STOPWATCH = f"""
         padding: 6px 12px;
 
     }}"""
+
+CONFIG_BUTTON = f"""
+QToolButton {{
+    background-color: {BACKGROUND};
+    color: black;
+    border-radius: 4px;
+    padding-top: 10px;
+    font-size: 22px;
+    font-weight: normal;
+}}
+
+QToolButton:hover {{
+    background-color: {PRESSED};
+}}
+
+QToolButton:pressed {{
+    background-color: {PRESSED};
+}}
+
+QToolButton:disabled {{
+    background-color: {PRESSED};
+}}
+
+QToolButton:checked {{
+    background-color: {PRESSED};
+}}
+"""
+
+PLOT_BUTTON = f"""
+QToolButton {{
+    background-color: {BACKGROUND};
+    color: black;
+    border-radius: 4px;
+    font-size: 22px;
+    font-weight: normal;
+}}
+
+QToolButton:hover {{
+    background-color: {PRESSED};
+}}
+
+QToolButton:pressed {{
+    background-color: {PRESSED};
+}}
+
+QToolButton:disabled {{
+    background-color: {PRESSED};
+}}
+
+QToolButton:checked {{
+    background-color: {PRESSED};
+}}
+"""

@@ -1,6 +1,3 @@
-import logging
-logger = logging.getLogger(__name__)
-
 class TaskScheduler:
     def __init__(self, daq_backend):
         self.mfcs = []
@@ -49,18 +46,32 @@ class TaskScheduler:
     def update(self, current_time):
         self.current_time = current_time
 
+        # MFCs
         for wire_id, mfc in self.wire_map.items():
             for task in mfc.tasks:
+                self.check_task(mfc, task, current_time, wire_id)
 
-                if not task.active and task.start_time <= current_time < task.stop_time:
-                    task.active = True
-                    self.start_task(mfc, task, wire_id)
+        # Pumps
+        for pump in self.pumps:
+            for task in pump.tasks:
+                self.check_task(pump, task, current_time)
 
-                if task.active and current_time >= task.stop_time:
-                    task.active = False
-                    self.stop_task(mfc, task, wire_id)
+        # Lights
+        for light in self.lights:
+            for task in light.tasks:
+                self.check_task(light, task, current_time)
+        
+    def check_task(self, device, task, current_time, wire_id=None):
 
-    def start_task(self, mfc, task, wire_id):
+        if not task.active and task.start_time <= current_time < task.stop_time:
+            task.active = True
+            device.start_task(device, task, wire_id)
+
+        if task.active and current_time >= task.stop_time:
+            task.active = False
+            device.stop_task(device, task, wire_id)
+
+    def start_task(self, mfc, task, wire_id=None):
         slpm = max(0.0, min(task.flow_rate, 10.0))
         voltage = slpm / 10.0
 

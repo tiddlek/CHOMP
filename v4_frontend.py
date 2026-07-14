@@ -2,7 +2,7 @@ import os
 import sys
 import nidaqmx
 import pyqtgraph as pg
-from v3_styles import *
+from v4_styles import *
 from datetime import datetime
 from pyqtgraph import AxisItem
 from PyQt6.QtCore import Qt, QSize, QTimer
@@ -12,25 +12,23 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QLabel, QButtonGroup,
     QLineEdit, QToolButton, QGraphicsPathItem,
     QTableWidget, QTableWidgetItem, QMessageBox, QPlainTextEdit)
-from PyQt6.QtGui import (QFont, QPainterPath, QFontDatabase, QIcon)
+from PyQt6.QtGui import (QFont, QPainterPath, QFontDatabase, QIcon, QPixmap)
 
 from v4_backend_daq import NI_DAQBackend
 from v4_backend_mock import MockDAQBackend
 from v4_scheduler import TaskScheduler
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, scheduler):
         super().__init__()
 
         self.setup_window()
-
+        self.scheduler = scheduler
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_stopwatch)
 
         self.elapsed_seconds = 0
         self.is_running = False
-        self.scheduler = TaskScheduler(MockDAQBackend())
-        #self.scheduler = TaskScheduler(NI_DAQBackend())
 
         self.create_pages()
         self.create_navbar()
@@ -109,7 +107,7 @@ class MainWindow(QMainWindow):
     def create_pages(self):
         self.stack = QStackedWidget()
 
-        self.chambers_page = ChambersPage()
+        self.chambers_page = ChambersPage(self.scheduler)
         self.log_page = LogPage()
 
         self.scheduler.log_callback = self.log_page.append
@@ -602,14 +600,14 @@ class ChamberWindow(QWidget):
         win.show()
     
     def open_light(self, light, button):
-        win = lightsWindow(light, button, self.scheduler, self)
+        win = LightsWindow(light, button, self.scheduler, self)
         self.light_windows.append(win)
 
         button.setEnabled(False)
         win.show()
     
     def open_ozone(self, ozone, button):
-        win = lightsWindow(ozone, button, self.scheduler, self)
+        win = OzoneWindow(ozone, button, self.scheduler, self)
         self.ozone_windows.append(win)
 
         button.setEnabled(False)
@@ -1407,7 +1405,7 @@ class PumpWindow(QWidget):
 
         self.draw_task_box(task)
 
-class lightsWindow(QWidget):
+class LightsWindow(QWidget):
     def __init__(self, lights, button, scheduler, chamber_window):
         super().__init__()
         self.setStyleSheet(f"background-color: {BACKGROUND};")
@@ -1419,7 +1417,8 @@ class lightsWindow(QWidget):
         self.resize(800,760)
 
         self.task_boxes = []
-        self.graph = self.create_plot()
+        self.graph_c = self.create_plot()
+        self.graph_m = self.create_plot()
 
         layout = QVBoxLayout(self)
 
@@ -1448,7 +1447,44 @@ class lightsWindow(QWidget):
 
         layout.addSpacing(50)
 
-        layout.addWidget(self.graph)
+        g_c = QHBoxLayout()
+        g_m = QHBoxLayout()
+
+        button = QToolButton()
+        
+        button.setIcon(QIcon(resource_path("imgs/middle.png")))
+
+        button.setIconSize(QSize(100, 100))
+        button.setFixedSize(50, 50)
+
+        button.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonIconOnly
+        )
+
+        button.setStyleSheet(PLOT_BUTTON)
+
+        g_c.addWidget(button, alignment=Qt.AlignmentFlag.AlignTop)
+
+        g_c.addWidget(self.graph_c)
+
+        button2 = QToolButton()
+
+        button2.setIcon(QIcon(resource_path("imgs/corner.png")))
+
+        button2.setIconSize(QSize(100, 100))
+        button2.setFixedSize(50, 50)
+
+        button2.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonIconOnly
+        )
+
+        button2.setStyleSheet(PLOT_BUTTON)
+
+        g_m.addWidget(button2, alignment=Qt.AlignmentFlag.AlignTop)
+        g_m.addWidget(self.graph_m)
+
+        layout.addLayout(g_c)
+        layout.addLayout(g_m)
         
         self.load_tasks()
     
@@ -1496,50 +1532,55 @@ class lightsWindow(QWidget):
         title = QLabel("Create Task")
         title.setStyleSheet(PAGE_TITLE)
         self.start_row = TimeInput("Start")
-        self.duration = TimeInput("Duration")
-        self.rate = FlowInput("Rate")
+        self.stop_row = TimeInput("Stop")
         self.task_button = self.create_task_button()
         left_layout.setContentsMargins(40, 0, 20, 0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self.volume = QLabel("Total Injection: Volume: ")
+        configs = QHBoxLayout()
+        self.btn1 = QToolButton()
+        self.btn2 = QToolButton()
 
-        self.start_row.time.textChanged.connect(self.calculate)
-        self.duration.time.textChanged.connect(self.calculate)
-        self.rate.time.textChanged.connect(self.calculate)
+        self.btn1.setStyleSheet(CONFIG_BUTTON)
+        self.btn2.setStyleSheet(CONFIG_BUTTON)
+
+        self.btn1.setFixedSize(100, 100)
+        self.btn2.setFixedSize(100, 100)
+
+        self.btn1.setText("Middle")
+        self.btn2.setText("Corner")
+        self.btn1.setCheckable(True)
+        self.btn2.setCheckable(True)
+
+        self.group = QButtonGroup()
+        self.group.addButton(self.btn1)
+        self.group.addButton(self.btn2)
+        self.group.setExclusive(True)
+        self.btn1.setChecked(True)
+
+        self.btn1.setIcon(QIcon(resource_path("imgs/middle.png")))
+        self.btn1.setIconSize(QSize(50, 50))
+        self.btn1.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+
+        self.btn2.setIcon(QIcon(resource_path("imgs/corner.png")))
+        self.btn2.setIconSize(QSize(50, 50))
+        self.btn2.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+
+        configs.addWidget(self.btn1)
+        configs.addWidget(self.btn2)
+
 
         left_layout.addWidget(title)
         left_layout.addSpacing(6)
         left_layout.addWidget(self.start_row)
         left_layout.addSpacing(6)
-        left_layout.addWidget(self.duration)
+        left_layout.addWidget(self.stop_row)
         left_layout.addSpacing(6)
-
-        left_layout.addWidget(self.rate)
-
-        left_layout.addSpacing(5)
-        left_layout.addWidget(self.volume)
+        left_layout.addLayout(configs)
         left_layout.addWidget(self.task_button)
-
-  
 
         return left_layout
     
-    def calculate(self):
-            try:
-                start = float(self.start_row.time.text())
-                duration = float(self.duration.time.text())
-                rate = float(self.rate.time.text())
-
-                if duration > 0:
-                    volume = duration * rate
-                    self.volume.setText(f"Total Injection: Volume: {volume:.3f} \u00B5L")
-                else:
-                    self.volume.setText("Total Injection: Volume: --")
-            except ValueError:
-                self.volume.setText("Total Injection: Volume: --")
-
-
     def create_right(self):
         
         right_layout = QVBoxLayout()
@@ -1551,7 +1592,7 @@ class lightsWindow(QWidget):
         self.task_table = QTableWidget()
         self.task_table.setColumnCount(3)
         self.task_table.setHorizontalHeaderLabels(
-            ["Start", "Duration", "\u00B5L/sec"]
+            ["Start", "Stop", "Config"]
         )
 
         self.task_table.setFixedSize(336, 120)
@@ -1600,13 +1641,6 @@ class lightsWindow(QWidget):
 
     def create_plot(self):
 
-        slpm_axis = AxisItem(orientation="left")
-
-        slpm_ticks = [
-            [(i, "") for i in [0, 0.2, 0.4, 0.6, 0.8, 1.0]],
-            [(i, f"{i:.1f}") for i in [0, 0.2, 0.4, 0.6, 0.8, 1.0]]
-        ]
-
         time_axis = AxisItem(orientation="bottom")
 
         time_ticks = [
@@ -1620,36 +1654,28 @@ class lightsWindow(QWidget):
             [(i, "") for i in range(0, 121, 10)]
         ]
 
-        slpm_axis.setTicks(slpm_ticks)
         time_axis.setTicks(time_ticks)
 
         self.graph = pg.PlotWidget(
             axisItems={
-                "left": slpm_axis,
                 "bottom": time_axis
             }
         )
 
+        self.graph.hideAxis("left")
 
         self.graph.getAxis("bottom").setStyle(
             tickLength=5,
             tickTextOffset=8
         )
 
-        self.graph.getAxis("left").setStyle(
-            tickLength=5,
-            tickTextOffset=8
-        )
 
         self.graph.setBackground(BACKGROUND)
         self.graph.showGrid(x=False, y=False, alpha=1.0)
-        self.graph.getAxis("left").setPen("k")
         self.graph.getAxis("bottom").setPen("k")
 
-        self.graph.setLabel("left", "\u00B5L/sec")
         self.graph.setLabel("bottom", "Time (seconds)")
 
-        self.graph.setYRange(0, 1, padding=0)
         self.graph.setXRange(0, 120, padding=0)
 
         self.graph.getViewBox().setDefaultPadding(0)
@@ -1659,10 +1685,9 @@ class lightsWindow(QWidget):
         axis_pen = pg.mkPen(color="black", width=2)
 
         time_axis.setPen(axis_pen)
-        slpm_axis.setPen(axis_pen)
 
         self.graph.getAxis("left").setTextPen("k")
-        self.graph.getAxis("bottom").setTextPen("k")
+        
         self.graph.setMouseEnabled(x=False, y=False)
 
         return self.graph
@@ -1685,47 +1710,35 @@ class lightsWindow(QWidget):
     def add_task(self):
         try:
             start = int(self.start_row.time.text())
-            duration = int(self.duration.time.text())
-            flow = float(self.rate.time.text())
+            stop = int(self.stop_row.time.text())
 
-            if flow < 0:
-                QMessageBox.warning(
-                    self,
-                    "Invalid Flow",
-                    "Flow cannot be negative."
-                )
-                return
-
-            if flow > 10:
-                QMessageBox.warning(
-                    self,
-                    "Invalid Flow",
-                    "Maximum flow is 10 SLPM."
-                )
-                return
-
-            if duration < 1 or (duration % 1) != 0:
+            if stop - start < 0:
                 raise ValueError("Duration must be a positive whole number")
 
         except ValueError as e:
             QMessageBox.warning(self, "Invalid Input", "Enter seconds in whole numbers")
             return
 
+
+        if self.btn1.isChecked():
+            config = "c"
+        elif self.btn2.isChecked():
+            config = "m"
+        
         task = LightsTask(
-            flow_rate=flow,
             start_time=start,
-            duration=duration
+            stop_time=stop,
+            config=config
         )
 
         self.lights.add_task(task)
         self.add_task_to_ui(task)
 
         self.start_row.time.clear()
-        self.duration.time.clear()
-        self.rate.time.clear()
+        self.stop_row.time.clear()
 
         max_stop = max(
-            (task.duration for task in self.lights.tasks),
+            (task.stop_time for task in self.lights.tasks),
             default=120
         )
 
@@ -1737,7 +1750,7 @@ class lightsWindow(QWidget):
 
     def draw_task_box(self, task):
 
-        width = task.duration
+        width = task.stop_time - task.start_time
         center = task.start_time + width / 2
 
         path = QPainterPath()
@@ -1745,7 +1758,7 @@ class lightsWindow(QWidget):
             center - width/2,
             0.005,
             width,
-            task.flow_rate - 0.005,
+            10,
             0.2,
             0.2
         )
@@ -1755,7 +1768,11 @@ class lightsWindow(QWidget):
         box.setBrush(pg.mkBrush(BLUE))
         box.setPen(pg.mkPen(BACKGROUND, width=2))
 
-        self.graph.addItem(box)
+        if task.config == "c":
+            self.graph_c.addItem(box)
+        elif task.config == "m":
+            self.graph_m.addItem(box)
+
         self.task_boxes.append(box)
 
         return box
@@ -1771,13 +1788,13 @@ class lightsWindow(QWidget):
 
         self.task_table.setItem(
             row, 1,
-            QTableWidgetItem(str(task.duration))
+            QTableWidgetItem(str(task.stop_time))
         )
 
         self.task_table.setItem(
             row, 2,
             QTableWidgetItem(
-                str(task.flow_rate)
+                str(task.config)
             )
         )
 
@@ -2160,12 +2177,14 @@ class OzoneWindow(QWidget):
         self.draw_task_box(task)
 
 class ChambersPage(QWidget):
-    def __init__(self):
+    def __init__(self, scheduler):
         super().__init__()
 
         self.chamber_count = 0
         self.chambers = []
         self.windows = []
+
+        self.scheduler = scheduler
 
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(100, 30, 60, 30)
@@ -2210,7 +2229,7 @@ class ChambersPage(QWidget):
         )
 
     def open_chamber(self, chamber, button):
-        win = ChamberWindow(chamber, button, self.window().scheduler, self)
+        win = ChamberWindow(chamber, button, self.scheduler, self)
         self.windows.append(win)
         button.setEnabled(False) 
         win.show()
@@ -2235,7 +2254,7 @@ class LogPage(QWidget):
     def append(self, message):
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.log.appendPlainText(f"[{timestamp}] {message}")
-        
+
 def load_fonts():
     regular = resource_path("Cantarell/Cantarell-Regular.ttf")
     bold = resource_path("Cantarell/Cantarell-Bold.ttf")
@@ -2254,13 +2273,17 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 def main():
+    daq = MockDAQBackend()
+    #daq = NI_DAQBackend()
+    scheduler = TaskScheduler(daq)
+
     app = QApplication([])
     
     load_fonts()
 
     app.setFont(QFont("Cantarell", 16))
 
-    w = MainWindow()
+    w = MainWindow(scheduler)
     w.show()
 
     app.exec()
@@ -2269,5 +2292,6 @@ def main():
 main()
 
 # TODO add lights to chambers
-# TODO rebuild mac and windows 
+# TODO add ozone to chambers
 # TODO change scheduler to pick up mfc and pump and lights and O3 tasks
+# TODO rebuild mac and windows 
