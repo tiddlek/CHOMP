@@ -43,7 +43,7 @@ QToolButton {{
     border-radius: 8px;
     padding-top: 70px;
     font-size: 22px;
-    font-weight: normal;
+    font-weight: regular;
 }}
 
 QToolButton:hover {{
@@ -318,7 +318,7 @@ QToolButton {{
     border-radius: 4px;
     padding-top: 10px;
     font-size: 22px;
-    font-weight: normal;
+    font-weight: regular;
 }}
 
 QToolButton:hover {{
@@ -344,7 +344,7 @@ QToolButton {{
     color: black;
     border-radius: 4px;
     font-size: 22px;
-    font-weight: normal;
+    font-weight: regular;
 }}
 
 QToolButton:hover {{

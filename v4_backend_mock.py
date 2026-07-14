@@ -5,5 +5,8 @@ class MockDAQBackend:
     def write_lights(self, config):
         pass
     
-    def write_relay(self):
+    def write_ozone(self):
+        pass
+    
+    def write_pump(self):
         pass

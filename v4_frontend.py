@@ -260,6 +260,8 @@ class ChamberWindow(QWidget):
         self.button = button
         self.scheduler = scheduler
         self.scheduler.add_light(chamber.light)
+        self.scheduler.add_ozone(chamber.ozone)
+
         self.setWindowTitle(chamber.name)
         self.resize(900,760)
 
@@ -382,6 +384,19 @@ class ChamberWindow(QWidget):
 
             if mfc.wire in self.scheduler.wire_map:
                 del self.scheduler.wire_map[mfc.wire]
+
+        for pump in self.chamber.pumps:
+            if pump in self.scheduler.pumps:
+                self.scheduler.pumps.remove(mfc)
+
+        for light in self.chamber.lights:
+            if mfc in self.scheduler.lights:
+                self.scheduler.lights.remove(light)
+        
+        for ozone in self.chamber.ozone:
+            if mfc in self.scheduler.ozone:
+                self.ozone.mfcs.remove(ozone)
+
         for win in self.mfc_windows:
             win.close()
 
@@ -856,13 +871,11 @@ class MFCWindow(QWidget):
         center = task.start_time + width / 2
 
         path = QPainterPath()
-        path.addRoundedRect(
+        path.addRect(
             center - width/2,
             0.05,
             width,
             task.flow_rate - 0.05,
-            0.4,
-            0.4
         )
 
         box = QGraphicsPathItem(path)
@@ -1232,13 +1245,11 @@ class PumpWindow(QWidget):
         center = task.start_time + width / 2
 
         path = QPainterPath()
-        path.addRoundedRect(
+        path.addRect(
             center - width/2,
             0.005,
             width,
             task.flow_rate - 0.005,
-            0.2,
-            0.2
         )
 
         box = QGraphicsPathItem(path)
@@ -1321,7 +1332,7 @@ class LightsWindow(QWidget):
 
         button = QToolButton()
         
-        button.setIcon(QIcon(resource_path("imgs/middle.png")))
+        button.setIcon(QIcon(resource_path("imgs/corner.png")))
 
         button.setIconSize(QSize(100, 100))
         button.setFixedSize(50, 50)
@@ -1338,7 +1349,7 @@ class LightsWindow(QWidget):
 
         button2 = QToolButton()
 
-        button2.setIcon(QIcon(resource_path("imgs/corner.png")))
+        button2.setIcon(QIcon(resource_path("imgs/middle.png")))
 
         button2.setIconSize(QSize(100, 100))
         button2.setFixedSize(50, 50)
@@ -1623,13 +1634,11 @@ class LightsWindow(QWidget):
         center = task.start_time + width / 2
 
         path = QPainterPath()
-        path.addRoundedRect(
+        path.addRect(
             center - width/2,
-            0.005,
+            0.05,
             width,
             10,
-            0.2,
-            0.2
         )
 
         box = QGraphicsPathItem(path)
@@ -1678,7 +1687,7 @@ class OzoneWindow(QWidget):
         self.button = button
         self.scheduler = scheduler
 
-        self.resize(800,760)
+        self.resize(800,500)
 
         self.task_boxes = []
         self.graph = self.create_plot()
@@ -1758,49 +1767,22 @@ class OzoneWindow(QWidget):
         title = QLabel("Create Task")
         title.setStyleSheet(PAGE_TITLE)
         self.start_row = TimeInput("Start")
-        self.duration = TimeInput("Duration")
-        self.rate = FlowInput("Rate")
+        self.stop_row = TimeInput("Stop")
         self.task_button = self.create_task_button()
         left_layout.setContentsMargins(40, 0, 20, 0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-
-        self.volume = QLabel("Total Injection: Volume: ")
-
-        self.start_row.time.textChanged.connect(self.calculate)
-        self.duration.time.textChanged.connect(self.calculate)
-        self.rate.time.textChanged.connect(self.calculate)
 
         left_layout.addWidget(title)
         left_layout.addSpacing(6)
         left_layout.addWidget(self.start_row)
         left_layout.addSpacing(6)
-        left_layout.addWidget(self.duration)
-        left_layout.addSpacing(6)
-
-        left_layout.addWidget(self.rate)
+        left_layout.addWidget(self.stop_row)
 
         left_layout.addSpacing(5)
-        left_layout.addWidget(self.volume)
         left_layout.addWidget(self.task_button)
-
-  
 
         return left_layout
     
-    def calculate(self):
-            try:
-                start = float(self.start_row.time.text())
-                duration = float(self.duration.time.text())
-                rate = float(self.rate.time.text())
-
-                if duration > 0:
-                    volume = duration * rate
-                    self.volume.setText(f"Total Injection: Volume: {volume:.3f} \u00B5L")
-                else:
-                    self.volume.setText("Total Injection: Volume: --")
-            except ValueError:
-                self.volume.setText("Total Injection: Volume: --")
-
 
     def create_right(self):
         
@@ -1811,9 +1793,9 @@ class OzoneWindow(QWidget):
         title.setStyleSheet(PAGE_TITLE)
 
         self.task_table = QTableWidget()
-        self.task_table.setColumnCount(3)
+        self.task_table.setColumnCount(2)
         self.task_table.setHorizontalHeaderLabels(
-            ["Start", "Duration", "\u00B5L/sec"]
+            ["Start", "Stop"]
         )
 
         self.task_table.setFixedSize(336, 120)
@@ -1821,9 +1803,8 @@ class OzoneWindow(QWidget):
 
         self.task_table.setStyleSheet(TABLE)
 
-        self.task_table.setColumnWidth(0, 110)   # Start
-        self.task_table.setColumnWidth(1, 110)   # Stop
-        self.task_table.setColumnWidth(2, 112)   # SLPM
+        #self.task_table.setColumnWidth(0, 110)   # Start
+        #self.task_table.setColumnWidth(1, 110)   # Stop
         self.task_table.verticalHeader().setVisible(False)
         self.task_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.task_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
@@ -1862,13 +1843,6 @@ class OzoneWindow(QWidget):
 
     def create_plot(self):
 
-        slpm_axis = AxisItem(orientation="left")
-
-        slpm_ticks = [
-            [(i, "") for i in [0, 0.2, 0.4, 0.6, 0.8, 1.0]],
-            [(i, f"{i:.1f}") for i in [0, 0.2, 0.4, 0.6, 0.8, 1.0]]
-        ]
-
         time_axis = AxisItem(orientation="bottom")
 
         time_ticks = [
@@ -1882,36 +1856,28 @@ class OzoneWindow(QWidget):
             [(i, "") for i in range(0, 121, 10)]
         ]
 
-        slpm_axis.setTicks(slpm_ticks)
         time_axis.setTicks(time_ticks)
 
         self.graph = pg.PlotWidget(
             axisItems={
-                "left": slpm_axis,
                 "bottom": time_axis
             }
         )
 
+        self.graph.hideAxis("left")
 
         self.graph.getAxis("bottom").setStyle(
             tickLength=5,
             tickTextOffset=8
         )
 
-        self.graph.getAxis("left").setStyle(
-            tickLength=5,
-            tickTextOffset=8
-        )
 
         self.graph.setBackground(BACKGROUND)
         self.graph.showGrid(x=False, y=False, alpha=1.0)
-        self.graph.getAxis("left").setPen("k")
         self.graph.getAxis("bottom").setPen("k")
 
-        self.graph.setLabel("left", "\u00B5L/sec")
         self.graph.setLabel("bottom", "Time (seconds)")
 
-        self.graph.setYRange(0, 1, padding=0)
         self.graph.setXRange(0, 120, padding=0)
 
         self.graph.getViewBox().setDefaultPadding(0)
@@ -1921,10 +1887,9 @@ class OzoneWindow(QWidget):
         axis_pen = pg.mkPen(color="black", width=2)
 
         time_axis.setPen(axis_pen)
-        slpm_axis.setPen(axis_pen)
 
         self.graph.getAxis("left").setTextPen("k")
-        self.graph.getAxis("bottom").setTextPen("k")
+        
         self.graph.setMouseEnabled(x=False, y=False)
 
         return self.graph
@@ -1947,26 +1912,9 @@ class OzoneWindow(QWidget):
     def add_task(self):
         try:
             start = int(self.start_row.time.text())
-            duration = int(self.duration.time.text())
-            flow = float(self.rate.time.text())
+            stop = int(self.stop_row.time.text())
 
-            if flow < 0:
-                QMessageBox.warning(
-                    self,
-                    "Invalid Flow",
-                    "Flow cannot be negative."
-                )
-                return
-
-            if flow > 10:
-                QMessageBox.warning(
-                    self,
-                    "Invalid Flow",
-                    "Maximum flow is 10 SLPM."
-                )
-                return
-
-            if duration < 1 or (duration % 1) != 0:
+            if stop - start < 0:
                 raise ValueError("Duration must be a positive whole number")
 
         except ValueError as e:
@@ -1974,20 +1922,18 @@ class OzoneWindow(QWidget):
             return
 
         task = OzoneTask(
-            flow_rate=flow,
             start_time=start,
-            duration=duration
+            stop_time=stop
         )
 
         self.ozone.add_task(task)
         self.add_task_to_ui(task)
 
         self.start_row.time.clear()
-        self.duration.time.clear()
-        self.rate.time.clear()
+        self.stop_row.time.clear()
 
         max_stop = max(
-            (task.duration for task in self.ozone.tasks),
+            (task.stop_time for task in self.ozone.tasks),
             default=120
         )
 
@@ -1999,17 +1945,16 @@ class OzoneWindow(QWidget):
 
     def draw_task_box(self, task):
 
-        width = task.duration
+        width = task.stop_time - task.start_time
         center = task.start_time + width / 2
 
         path = QPainterPath()
-        path.addRoundedRect(
+        path.addRect(
             center - width/2,
-            0.005,
+            0.05,
             width,
-            task.flow_rate - 0.005,
-            0.2,
-            0.2
+            10,
+
         )
 
         box = QGraphicsPathItem(path)
@@ -2033,14 +1978,7 @@ class OzoneWindow(QWidget):
 
         self.task_table.setItem(
             row, 1,
-            QTableWidgetItem(str(task.duration))
-        )
-
-        self.task_table.setItem(
-            row, 2,
-            QTableWidgetItem(
-                str(task.flow_rate)
-            )
+            QTableWidgetItem(str(task.stop_time))
         )
 
         self.draw_task_box(task)

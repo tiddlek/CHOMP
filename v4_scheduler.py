@@ -5,6 +5,7 @@ class TaskScheduler:
         self.mfcs = []
         self.pumps = []
         self.lights = []
+        self.ozone = []
         self.current_time = 0
         self.wire_map = {}
         self.SAFE_SLPM = 3.5
@@ -39,6 +40,9 @@ class TaskScheduler:
     def add_light(self, light):
         self.lights.append(light)
 
+    def add_ozone(self, ozone):
+        self.lights.append(ozone)
+
     def reset(self):
         self.current_time = 0
         for mfc in self.mfcs:
@@ -62,6 +66,10 @@ class TaskScheduler:
         for light in self.lights:
             for task in light.tasks:
                 self.check_task(light, task, current_time)
+
+        for light in self.lights:
+            for task in light.tasks:
+                self.check_task(light, task, current_time)
         
     def check_task(self, device, task, current_time, wire_id=None):
 
@@ -71,6 +79,10 @@ class TaskScheduler:
                 self.start_mfc_task(device, task, wire_id)
             elif isinstance(device, Pump):
                 self.start_pump_task(device, task)
+            elif isinstance(device, Light):
+                self.start_light_task(device, task)
+            elif isinstance(device, Ozone):
+                self.start_ozone_task(device, task)
 
         if task.active and current_time >= task.stop_time:
             task.active = False
@@ -78,6 +90,10 @@ class TaskScheduler:
                 self.stop_mfc_task(device, task, wire_id)
             elif isinstance(device, Pump):
                 self.stop_pump_task(device, task)
+            elif isinstance(device, Light):
+                self.stop_light_task(device, task)
+            elif isinstance(device, Ozone):
+                self.stop_ozone_task(device, task)
 
     def start_mfc_task(self, mfc, task, wire_id=None):
         slpm = max(0.0, min(task.flow_rate, 10.0))
@@ -99,3 +115,15 @@ class TaskScheduler:
     
     def stop_pump_task(self, pump, task):
         self.log(f"[STOP] {pump.name} rate={task.flow_rate}")
+
+    def start_light_task(self, light, task):
+        self.log(f"[START] lights config={task.config}")
+    
+    def stop_light_task(self, light, task):
+        self.log(f"[STOP] lights config={task.config}")
+
+    def start_ozone_task(self, light, task):
+        self.log(f"[START] ozone")
+    
+    def stop_ozone_task(self, light, task):
+        self.log(f"[STOP] ozone")
