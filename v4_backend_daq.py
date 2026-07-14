@@ -10,18 +10,32 @@ class NI_DAQBackend:
             task.ao_channels.add_ao_voltage_chan(channel)
             self.tasks[wire] = task
 
+        for light in [23, 9, 10]:
+            channel = f"Dev1/port0/line{light}"
+            task = nidaqmx.Task()
+            task.do_channels.add_do_chan(channel)
+            self.tasks[light] = task
+            
     def write_voltage(self, wire_id, voltage):
         if wire_id not in self.tasks:
             raise ValueError(f"No DAQ channel for wire {wire_id}")
 
         self.tasks[wire_id].write(voltage)
     
-    def write_lights(self, config):
+    def write_lights(self, config, on):
         if config == "c":
-            pass
+            if on == True:
+                self.tasks[23].write(True)
+                self.tasks[10].write(True)
+            else:
+                self.tasks[23].write(False)
+                self.tasks[10].write(False)
         elif config == "m":
-            pass
-        pass
+            if on == True:
+                self.tasks[9].write(True)
+            else:
+                self.tasks[9].write(False)
+
 
     def write_ozone(self):
         pass

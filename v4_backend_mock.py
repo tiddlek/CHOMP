@@ -8,5 +8,5 @@ class MockDAQBackend:
     def write_ozone(self):
         pass
     
-    def write_pump(self):
+    def write_pump(self, rate):
         pass

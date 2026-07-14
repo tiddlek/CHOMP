@@ -2080,8 +2080,8 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 def main():
-    daq = MockDAQBackend()
-    #daq = NI_DAQBackend()
+    #daq = MockDAQBackend()
+    daq = NI_DAQBackend()
     scheduler = TaskScheduler(daq)
 
     app = QApplication([])

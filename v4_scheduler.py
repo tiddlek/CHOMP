@@ -118,9 +118,11 @@ class TaskScheduler:
 
     def start_light_task(self, light, task):
         self.log(f"[START] lights config={task.config}")
+        self.daq.write_lights(task.config, True)
     
     def stop_light_task(self, light, task):
         self.log(f"[STOP] lights config={task.config}")
+        self.daq.write_lights(task.config, False)
 
     def start_ozone_task(self, light, task):
         self.log(f"[START] ozone")
