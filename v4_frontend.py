@@ -1427,8 +1427,8 @@ class LightsWindow(QWidget):
         self.btn1.setFixedSize(100, 100)
         self.btn2.setFixedSize(100, 100)
 
-        self.btn1.setText("Middle")
-        self.btn2.setText("Corner")
+        self.btn1.setText("Corner")
+        self.btn2.setText("Middle")
         self.btn1.setCheckable(True)
         self.btn2.setCheckable(True)
 
@@ -1438,11 +1438,11 @@ class LightsWindow(QWidget):
         self.group.setExclusive(True)
         self.btn1.setChecked(True)
 
-        self.btn1.setIcon(QIcon(resource_path("imgs/middle.png")))
+        self.btn1.setIcon(QIcon(resource_path("imgs/corner.png")))
         self.btn1.setIconSize(QSize(50, 50))
         self.btn1.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
-        self.btn2.setIcon(QIcon(resource_path("imgs/corner.png")))
+        self.btn2.setIcon(QIcon(resource_path("imgs/middle.png")))
         self.btn2.setIconSize(QSize(50, 50))
         self.btn2.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
@@ -1687,7 +1687,7 @@ class OzoneWindow(QWidget):
         self.button = button
         self.scheduler = scheduler
 
-        self.resize(800,500)
+        self.resize(800,600)
 
         self.task_boxes = []
         self.graph = self.create_plot()
@@ -1695,7 +1695,7 @@ class OzoneWindow(QWidget):
         layout = QVBoxLayout(self)
 
         middle_layout = QHBoxLayout()
-        middle_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        middle_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         self.left = self.create_left()
         self.right = self.create_right()
@@ -1770,7 +1770,7 @@ class OzoneWindow(QWidget):
         self.stop_row = TimeInput("Stop")
         self.task_button = self.create_task_button()
         left_layout.setContentsMargins(40, 0, 20, 0)
-        left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        left_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         left_layout.addWidget(title)
         left_layout.addSpacing(6)
@@ -1787,7 +1787,7 @@ class OzoneWindow(QWidget):
     def create_right(self):
         
         right_layout = QVBoxLayout()
-        right_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        right_layout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         title = QLabel("Task List")
         title.setStyleSheet(PAGE_TITLE)
@@ -1803,8 +1803,8 @@ class OzoneWindow(QWidget):
 
         self.task_table.setStyleSheet(TABLE)
 
-        #self.task_table.setColumnWidth(0, 110)   # Start
-        #self.task_table.setColumnWidth(1, 110)   # Stop
+        self.task_table.setColumnWidth(0, 166)   # Start
+        self.task_table.setColumnWidth(1, 166)   # Stop
         self.task_table.verticalHeader().setVisible(False)
         self.task_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.task_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
@@ -2080,8 +2080,8 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 def main():
-    #daq = MockDAQBackend()
-    daq = NI_DAQBackend()
+    daq = MockDAQBackend()
+    #daq = NI_DAQBackend()
     scheduler = TaskScheduler(daq)
 
     app = QApplication([])
