@@ -1,3 +1,5 @@
+from v4_devices import MFC, Pump, Ozone, Light
+
 class TaskScheduler:
     def __init__(self, daq_backend):
         self.mfcs = []
@@ -65,13 +67,19 @@ class TaskScheduler:
 
         if not task.active and task.start_time <= current_time < task.stop_time:
             task.active = True
-            device.start_task(device, task, wire_id)
+            if isinstance(device, MFC):
+                self.start_mfc_task(device, task, wire_id)
+            elif isinstance(device, Pump):
+                self.start_pump_task(device, task)
 
         if task.active and current_time >= task.stop_time:
             task.active = False
-            device.stop_task(device, task, wire_id)
+            if isinstance(device, MFC):
+                self.stop_mfc_task(device, task, wire_id)
+            elif isinstance(device, Pump):
+                self.stop_pump_task(device, task)
 
-    def start_task(self, mfc, task, wire_id=None):
+    def start_mfc_task(self, mfc, task, wire_id=None):
         slpm = max(0.0, min(task.flow_rate, 10.0))
         voltage = slpm / 10.0
 
@@ -79,9 +87,15 @@ class TaskScheduler:
 
         self.log(f"[START] {mfc.name} wire={wire_id} flow={slpm}")
 
-    def stop_task(self, mfc, task, wire_id):
+    def stop_mfc_task(self, mfc, task, wire_id):
         voltage = self.SAFE_SLPM / 10.0
 
         self.daq.write_voltage(wire_id, voltage)
 
         self.log(f"[STOP] {mfc.name} wire={wire_id}")
+    
+    def start_pump_task(self, pump, task):
+        self.log(f"[START] {pump.name} rate={task.flow_rate}")
+    
+    def stop_pump_task(self, pump, task):
+        self.log(f"[STOP] {pump.name} rate={task.flow_rate}")

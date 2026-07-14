@@ -18,6 +18,9 @@ from v4_backend_daq import NI_DAQBackend
 from v4_backend_mock import MockDAQBackend
 from v4_scheduler import TaskScheduler
 
+from v4_tasks import *
+from v4_devices import *
+
 class MainWindow(QMainWindow):
     def __init__(self, scheduler):
         super().__init__()
@@ -201,140 +204,6 @@ class HomePage(QWidget):
         layout.addWidget(title)
         layout.addWidget(subtitle)
         layout.addStretch()
-
-class MFCTask:
-    def __init__(self, flow_rate=0.0, start_time=0.0, stop_time=0.0):
-        self.flow_rate = flow_rate
-        self.start_time = start_time
-        self.stop_time = stop_time
-        self.active = False
-
-    def set_start(self, start_time):
-        self.start_time = start_time
-
-    def set_stop(self, stop_time):
-        self.stop_time = stop_time
-
-    def set_flow_rate(self, flow_rate):
-        self.flow_rate = flow_rate
-
-class MFC:
-    def __init__(self, name):
-        self.name = name
-        self.tasks = []
-        self.wire = ""
-
-    def add_task(self, task):
-        self.tasks.append(task)
-
-    def delete_task(self, index):
-        if 0 <= index < len(self.tasks):
-            del self.tasks[index]
-
-class PumpTask:
-    def __init__(self, flow_rate, start_time, duration):
-        self.flow_rate = flow_rate
-        self.start_time = start_time
-        self.duration = duration
-        self.active = False
-    
-    def set_start(self, start_time):
-        self.start_time = start_time
-
-    def set_stop(self, duration):
-        self.duration = duration
-
-    def set_flow_rate(self, flow_rate):
-        self.flow_rate = flow_rate
-    
-class Pump:
-    def __init__(self, name, volume):
-        self.name = name
-        self.tasks = []
-    
-    def add_task(self, task):
-        self.tasks.append(task)
-    
-    def delete_task(self, index):
-        if 0 <= index < len(self.tasks):
-            del self.tasks[index]
-
-class LightsTask:
-    def __init__(self, start_time, stop_time, config):
-        self.config = config
-        self.start_time = start_time
-        self.stop_time = stop_time
-        self.active = False
-
-    def set_start(self, start_time):
-        self.start_time = start_time
-
-    def set_stop(self, stop_time):
-        self.stop_time = stop_time
-
-    def set_config(self, config):
-        self.config = config
-
-class Light:
-    def __init__(self, name):
-        self.name = name
-        self.tasks = []
-    
-    def add_task(self, task):
-        self.tasks.append(task)
-    
-    def delete_task(self, index):
-        if 0 <= index < len(self.tasks):
-            del self.tasks[index]
-
-class OzoneTask:
-    def __init__(self, start_time, stop_time):
-        self.start_time = start_time
-        self.stop_time = stop_time
-        self.active = False
-
-    def set_start(self, start_time):
-        self.start_time = start_time
-
-    def set_stop(self, stop_time):
-        self.stop_time = stop_time
-
-class Ozone:
-    def __init__(self, name):
-        self.name = name
-        self.tasks = []
-    
-    def add_task(self, task):
-        self.tasks.append(task)
-    
-    def delete_task(self, index):
-        if 0 <= index < len(self.tasks):
-            del self.tasks[index]
-
-class Chamber:
-    def __init__(self, name):
-        self.name = name
-        self.mfcs = []
-        self.pumps = []
-        self.light = Light(f"Lights")
-        self.ozone = Ozone(f"Ozone Generator")
-        self.pump_count = 0
-        self.mfc_count = 0
-        self.light_count = 0
-
-    def add_mfc(self, mfc):
-        self.mfcs.append(mfc)
-    
-    def add_pump(self, pump):
-        self.pumps.append(pump)
-
-    def delete_mfc(self, index):
-        if 0 <= index < len(self.mfcs):
-            del self.mfcs[index]
-
-    def delete_pump(self, index):
-        if 0 <= index < len(self.pumps):
-            del self.pumps[index]
 
 class TimeInput(QWidget):
     def __init__(self, label_text):
