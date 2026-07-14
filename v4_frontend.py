@@ -1382,29 +1382,11 @@ class LightsWindow(QWidget):
         title.setStyleSheet(PAGE_TITLE)
         header_layout.setContentsMargins(40, 40, 0, 0)
 
-        delete = QPushButton("Delete lights")
-        delete.setStyleSheet(RESET_BUTTON)
-        delete.clicked.connect(self.delete_lights)
-
         header_layout.addWidget(title)
         header_layout.addSpacing(10)
-        header_layout.addWidget(delete)
         header_layout.addStretch()
 
         return header_layout
-    
-    def delete_lights(self):
-
-        if self.lights in self.scheduler.lightss:
-            self.scheduler.lightss.remove(self.lights)
-
-        if self.lights in self.chamber_window.chamber.lightss:
-            self.chamber_window.chamber.lightss.remove(self.lights)
-
-        self.chamber_window.line3.removeWidget(self.button)
-        self.button.deleteLater()
-
-        self.close()
 
     def create_left(self):    
         
@@ -1737,29 +1719,11 @@ class OzoneWindow(QWidget):
         title.setStyleSheet(PAGE_TITLE)
         header_layout.setContentsMargins(40, 40, 0, 0)
 
-        delete = QPushButton("Delete ozone")
-        delete.setStyleSheet(RESET_BUTTON)
-        delete.clicked.connect(self.delete_ozone)
-
         header_layout.addWidget(title)
         header_layout.addSpacing(10)
-        header_layout.addWidget(delete)
         header_layout.addStretch()
 
         return header_layout
-    
-    def delete_ozone(self):
-
-        if self.ozone in self.scheduler.ozones:
-            self.scheduler.ozones.remove(self.ozone)
-
-        if self.ozone in self.chamber_window.chamber.ozones:
-            self.chamber_window.chamber.ozones.remove(self.ozone)
-
-        self.chamber_window.line3.removeWidget(self.button)
-        self.button.deleteLater()
-
-        self.close()
 
     def create_left(self):    
         
