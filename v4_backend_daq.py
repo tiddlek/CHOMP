@@ -18,6 +18,13 @@ class NI_DAQBackend:
             task.do_channels.add_do_chan(channel)
             self.tasks[light] = task
 
+        ozone  = 11
+        channel = f"Dev1/port0/line{ozone}"
+        task = nidaqmx.Task()
+        task.do_channels.add_do_chan(channel)
+        self.tasks[ozone] = task
+
+
         self.ser = serial.Serial(
             port="COM5",
             baudrate=9600,
@@ -35,21 +42,14 @@ class NI_DAQBackend:
     
     def write_lights(self, config, on):
         if config == "c":
-            if on == True:
-                self.tasks[23].write(True)
-                self.tasks[10].write(True)
-            else:
-                self.tasks[23].write(False)
-                self.tasks[10].write(False)
+            self.tasks[8].write(on)
+            self.tasks[10].write(on)
         elif config == "m":
-            if on == True:
-                self.tasks[9].write(True)
-            else:
-                self.tasks[9].write(False)
+            self.tasks[9].write(on)
 
 
-    def write_ozone(self):
-        pass
+    def write_ozone(self, on):
+        self.task[11]. write(on)
     
     def write_pump(self, start):
         if start == True:

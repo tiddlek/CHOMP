@@ -127,7 +127,9 @@ class TaskScheduler:
         self.daq.write_lights(task.config, False)
 
     def start_ozone_task(self, light, task):
+        self.daq.write_ozone(True)
         self.log(f"[START] ozone")
     
     def stop_ozone_task(self, light, task):
+        self.daq.write_ozone(False)
         self.log(f"[STOP] ozone")
