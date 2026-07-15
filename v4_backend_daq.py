@@ -1,4 +1,6 @@
+import serial
 import nidaqmx
+import time
 
 class NI_DAQBackend:
     def __init__(self):
@@ -15,6 +17,15 @@ class NI_DAQBackend:
             task = nidaqmx.Task()
             task.do_channels.add_do_chan(channel)
             self.tasks[light] = task
+
+        self.ser = serial.Serial(
+            port="COM5",
+            baudrate=9600,
+            parity=serial.PARITY_ODD,
+            stopbits=serial.STOPBITS_TWO,
+            bytesize=serial.SEVENBITS,
+            timeout=2
+        )
             
     def write_voltage(self, wire_id, voltage):
         if wire_id not in self.tasks:
@@ -39,3 +50,13 @@ class NI_DAQBackend:
 
     def write_ozone(self):
         pass
+    
+    def write_pump(self, start):
+        if start == True:
+            self.ser.write(("start" + "\r\n").encode())
+        elif start == False:
+            self.ser.write(("stop" + "\r\n").encode())
+        time.sleep(0.5)
+        response = self.ser.read_all()
+        print(response)
+        return response

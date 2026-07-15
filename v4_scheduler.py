@@ -111,9 +111,11 @@ class TaskScheduler:
         self.log(f"[STOP] {mfc.name} wire={wire_id}")
     
     def start_pump_task(self, pump, task):
+        self.daq.write_pump(True)
         self.log(f"[START] {pump.name} rate={task.flow_rate}")
     
     def stop_pump_task(self, pump, task):
+        self.daq.write_pump(False)
         self.log(f"[STOP] {pump.name} rate={task.flow_rate}")
 
     def start_light_task(self, light, task):
