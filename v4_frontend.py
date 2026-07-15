@@ -1,6 +1,7 @@
 import os
 import sys
 import nidaqmx
+import platform
 import pyqtgraph as pg
 from v4_styles import *
 from datetime import datetime
@@ -2044,8 +2045,10 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 def main():
-    daq = MockDAQBackend()
-    #daq = NI_DAQBackend()
+    if platform.system() == "Windows":
+        daq = NI_DAQBackend()
+    elif platform.system() == "Darwin":  # macOS
+        daq = MockDAQBackend()
     scheduler = TaskScheduler(daq)
 
     app = QApplication([])
