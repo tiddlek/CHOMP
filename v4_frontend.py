@@ -2062,7 +2062,7 @@ def main():
 #systemCheck()
 main()
 
-# TODO add lights to chambers
-# TODO add ozone to chambers
-# TODO change scheduler to pick up mfc and pump and lights and O3 tasks
-# TODO rebuild mac and windows 
+# TODO pump backend
+# TODO relay backend
+# TODO Save and reuse routines
+# TODO Import Export routines
