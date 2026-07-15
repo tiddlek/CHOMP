@@ -12,7 +12,7 @@ class NI_DAQBackend:
             task.ao_channels.add_ao_voltage_chan(channel)
             self.tasks[wire] = task
 
-        for light in [23, 9, 10]:
+        for light in [8, 9, 10]:
             channel = f"Dev1/port0/line{light}"
             task = nidaqmx.Task()
             task.do_channels.add_do_chan(channel)
@@ -53,7 +53,7 @@ class NI_DAQBackend:
     
     def write_pump(self, start):
         if start == True:
-            self.ser.write(("start" + "\r\n").encode())
+            self.ser.write(("run" + "\r\n").encode())
         elif start == False:
             self.ser.write(("stop" + "\r\n").encode())
         time.sleep(0.5)

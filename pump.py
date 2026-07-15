@@ -17,6 +17,19 @@ def send_command(cmd):
     print(response)
     return response
 
-send_command("stop")
+def stop():
+    ser.write(("stop" + "\r\n").encode())
+    time.sleep(0.5)
+    response = ser.read_all()
+    print(response)
+    return response
+
+send_command("irate 0.75 ul/min")
+send_command("irun")
+send_command("crate")
+
+
+time.sleep(10)
+stop()
 
 ser.close()

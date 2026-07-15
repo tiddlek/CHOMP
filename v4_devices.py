@@ -12,9 +12,12 @@ class MFC:
             del self.tasks[index]
 
 class Pump:
-    def __init__(self, name, volume):
+    def __init__(self, name, volume=None, diameter = None):
         self.name = name
+        self.volume  = volume
+        self.diameter = diameter
         self.tasks = []
+
     
     def add_task(self, task):
         self.tasks.append(task)

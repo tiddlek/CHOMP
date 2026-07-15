@@ -1003,15 +1003,17 @@ class PumpWindow(QWidget):
         self.start_row = TimeInput("Start")
         self.duration = TimeInput("Duration")
         self.rate = FlowInput("Rate")
-        self.task_button = self.create_task_button()
+        
         left_layout.setContentsMargins(40, 0, 20, 0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self.volume = QLabel("Total Injection: Volume: ")
+        self.volume = QLabel("Total Injection volume: ")
 
         self.start_row.time.textChanged.connect(self.calculate)
         self.duration.time.textChanged.connect(self.calculate)
         self.rate.time.textChanged.connect(self.calculate)
+
+        self.task_button = self.create_task_button()
 
         left_layout.addWidget(title)
         left_layout.addSpacing(6)
@@ -1219,7 +1221,8 @@ class PumpWindow(QWidget):
         task = PumpTask(
             flow_rate=flow,
             start_time=start,
-            duration=duration
+            duration=duration,
+            ivolume = self.volume
         )
 
         self.pump.add_task(task)

@@ -15,11 +15,12 @@ class MFCTask:
         self.flow_rate = flow_rate
 
 class PumpTask:
-    def __init__(self, flow_rate, start_time, duration):
+    def __init__(self, flow_rate, start_time, duration, ivolume):
         self.flow_rate = flow_rate
         self.start_time = start_time
         self.duration = duration
         self.stop_time = start_time + duration
+        self.volume = ivolume
         self.active = False
     
     def set_start(self, start_time):
