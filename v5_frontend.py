@@ -1,6 +1,7 @@
 import os
 import sys
 import nidaqmx
+import json
 import platform
 import pyqtgraph as pg
 from styles import *
@@ -127,6 +128,17 @@ class MainWindow(QMainWindow):
 
     def start_timer(self):
         if not self.is_running:
+
+            data = {
+                "chambers": [
+                    chamber.to_dict()
+                    for chamber in self.chambers_page.chambers
+                ]
+            }
+
+            with open("experiment.json", "w") as f:
+                json.dump(data, f, indent=4)
+
             timestamp = datetime.now().strftime("%H:%M:%S")
             hrs = self.scheduler.current_time // 3600
             mins = (self.scheduler.current_time % 3600) // 60
