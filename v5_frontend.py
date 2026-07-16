@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
             Qt.ToolButtonStyle.ToolButtonIconOnly
         )
 
-        #self.export_btn.clicked.connect(self.export_experiment)
+        self.export_btn.clicked.connect(self.export_experiment)
 
         self.nav_bar.addWidget(self.btn_1)
         self.nav_bar.addSpacing(60)
@@ -163,6 +163,8 @@ class MainWindow(QMainWindow):
         self.nav_bar.addWidget(self.btn_3)
         self.nav_bar.addSpacing(60)
         self.nav_bar.addWidget(self.import_btn)
+        self.nav_bar.addSpacing(5)
+
         self.nav_bar.addWidget(self.export_btn)
 
         self.nav_bar.addWidget(self.run)
@@ -217,29 +219,32 @@ class MainWindow(QMainWindow):
         self.main_layout.addLayout(self.nav_bar)
         self.main_layout.addWidget(self.stack)
 
-    def start_timer(self):
-        if not self.is_running:
-
-            data = {
+    def export_experiment(self):
+        data = {
                 "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "chambers": [
                     chamber.to_dict()
                     for chamber in self.chambers_page.chambers
                 ]
             }
-            save_dir = os.path.join(
-                os.path.expanduser("~"),
-                "Documents",
-                "Barber Lab",
-                "CHOMP",
-                "jsons"
-            )
-            
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-            filepath = os.path.join(save_dir, f"experiment_{timestamp}.json")
+        save_dir = os.path.join(
+            os.path.expanduser("~"),
+            "Documents",
+            "Barber Lab",
+            "CHOMP",
+            "jsons"
+        )
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        filepath = os.path.join(save_dir, f"experiment_{timestamp}.json")
 
-            with open(filepath, "w") as f:
-                json.dump(data, f, indent=4)
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=4)
+
+    def start_timer(self):
+        if not self.is_running:
+
+            self.export_experiment()
 
             timestamp = datetime.now().strftime("%H:%M:%S")
             hrs = self.scheduler.current_time // 3600
