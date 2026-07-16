@@ -363,3 +363,25 @@ QToolButton:checked {{
     background-color: {PRESSED};
 }}
 """
+
+IMPORT_EXPORT = f"""
+QToolButton {{
+    background-color: transparent;
+    color: {BLUE};
+    border: 3px solid black;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}}
+
+QToolButton:hover {{
+    background-color: {BACKGROUND};
+    color: white;
+}}
+
+QToolButton:pressed {{
+    background-color: {BACKGROUND};
+    border: 2px solid {BACKGROUND};
+    color: white;
+}}
+"""

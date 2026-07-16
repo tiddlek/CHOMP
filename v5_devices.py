@@ -1,4 +1,5 @@
 from abc import ABC
+from v5_tasks import *
 
 class Chamber:
     def __init__(self, name):
@@ -47,6 +48,24 @@ class Chamber:
 
             "ozone": self.ozone.to_dict()
         }
+    
+    @classmethod
+    def from_dict(cls, data):
+
+        chamber = cls(data["name"])
+
+        for mfc_data in data.get("mfcs", []):
+            mfc = MFC.from_dict(mfc_data)
+            chamber.add_mfc(mfc)
+
+        for pump_data in data.get("pumps", []):
+            pump = Pump.from_dict(pump_data)
+            chamber.add_pump(pump)
+
+        chamber.light = Light.from_dict(data["light"])
+        chamber.ozone = Ozone.from_dict(data["ozone"])
+
+        return chamber
 
 class Device(ABC):
     def __init__(self, name):
@@ -83,6 +102,19 @@ class MFC(Device):
 
         return data
 
+    @classmethod
+    def from_dict(cls, data):
+
+        mfc = cls(data["name"])
+
+        mfc.wire = data.get("wire")
+
+        for task_data in data.get("tasks", []):
+            task = MFCTask.from_dict(task_data)
+            mfc.add_task(task)
+
+        return mfc
+
 class Pump(Device):
     def __init__(self, name, volume=None, diameter=None):
         super().__init__(name)
@@ -97,6 +129,21 @@ class Pump(Device):
         data["diameter"] = self.diameter
 
         return data
+    
+    @classmethod
+    def from_dict(cls, data):
+
+        pump = cls(
+            name=data["name"],
+            volume=data.get("volume"),
+            diameter=data.get("diameter")
+        )
+
+        for task_data in data.get("tasks", []):
+            task = PumpTask.from_dict(task_data)
+            pump.add_task(task)
+        
+        return pump
 
 class Light(Device):
     def __init__(self, name="Lights"):
@@ -107,6 +154,17 @@ class Light(Device):
         data["type"] = "Light"
         return data
 
+    @classmethod
+    def from_dict(cls, data):
+
+        light = cls(data["name"])
+
+        for task_data in data.get("tasks", []):
+            task = LightTask.from_dict(task_data)
+            light.add_task(task)
+
+        return light
+
 class Ozone(Device):
     def __init__(self, name="Ozone Generator"):
         super().__init__(name)
@@ -115,3 +173,14 @@ class Ozone(Device):
         data = super().to_dict()
         data["type"] = "Ozone"
         return data
+
+    @classmethod
+    def from_dict(cls, data):
+
+        ozone = cls(data["name"])
+
+        for task_data in data.get("tasks", []):
+            task = OzoneTask.from_dict(task_data)
+            ozone.add_task(task)
+
+        return ozone

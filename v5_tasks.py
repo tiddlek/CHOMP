@@ -31,6 +31,14 @@ class MFCTask(Task):
         data["flow_rate"] = self.flow_rate
         return data
 
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            start_time=data["start_time"],
+            stop_time=data["stop_time"],
+            flow_rate=data["flow_rate"]
+        )
+
 class PumpTask(Task):
     def __init__(self, flow_rate=0.0, start_time=0.0, duration=0.0, volume=0.0):
         super().__init__(start_time, start_time + duration)
@@ -56,6 +64,15 @@ class PumpTask(Task):
         data["volume"] = self.volume
         return data
     
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            start_time=data["start_time"],
+            duration=data["duration"],
+            flow_rate=data["flow_rate"],
+            volume=data["volume"]
+        )
+    
 class LightTask(Task):
     def __init__(self, start_time=0.0, stop_time=0.0, config=None):
         super().__init__(start_time, stop_time)
@@ -68,6 +85,14 @@ class LightTask(Task):
         data = super().to_dict()
         data["config"] = self.config
         return data
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            start_time=data["start_time"],
+            stop_time=data["stop_time"],
+            config=data["config"]
+        )
     
 class OzoneTask(Task):
     def __init__(self, start_time=0.0, stop_time=0.0):
@@ -76,3 +101,10 @@ class OzoneTask(Task):
     def to_dict(self):
         data = super().to_dict()
         return data
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            start_time=data["start_time"],
+            stop_time=data["stop_time"]
+        )

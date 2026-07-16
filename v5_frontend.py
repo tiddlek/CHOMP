@@ -1,6 +1,7 @@
 import os
 import sys
 import nidaqmx
+from PyQt6.QtWidgets import QFileDialog
 import json
 import platform
 import pyqtgraph as pg
@@ -50,6 +51,68 @@ class MainWindow(QMainWindow):
 
         self.main_layout = QVBoxLayout(self.central)
 
+    def import_experiment(self):
+
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Experiment",
+            "",
+            "JSON Files (*.json)"
+        )
+
+        if not filename:
+            return
+
+        with open(filename, "r") as f:
+            data = json.load(f)
+
+        # clear current experiment
+        self.clear_experiment()
+
+        # rebuild chambers
+        for chamber_data in data.get("chambers", []):
+
+            chamber = Chamber.from_dict(chamber_data)
+
+            self.chambers_page.add_existing_chamber(
+                chamber
+            )
+
+            # register hardware objects
+            self.scheduler.add_light(chamber.light)
+            self.scheduler.add_ozone(chamber.ozone)
+
+            for mfc in chamber.mfcs:
+                self.scheduler.add_mfc(mfc)
+
+            for pump in chamber.pumps:
+                self.scheduler.add_pump(pump)
+
+        self.scheduler.log(
+            f"[IMPORT] Loaded {len(data.get('chambers', []))} chambers"
+        )
+    
+    def clear_experiment(self):
+
+        # remove scheduler objects
+        self.scheduler.mfcs.clear()
+        self.scheduler.pumps.clear()
+        self.scheduler.lights.clear()
+        self.scheduler.ozones.clear()
+
+        # remove chamber objects
+        self.chambers_page.chambers.clear()
+
+        # remove chamber buttons from UI
+        while self.chambers_page.chamber_layout.count() > 1:
+
+            item = self.chambers_page.chamber_layout.takeAt(0)
+
+            widget = item.widget()
+
+            if widget:
+                widget.deleteLater()
+
     def create_navbar(self):
         self.nav_bar = QHBoxLayout()
 
@@ -67,12 +130,40 @@ class MainWindow(QMainWindow):
         self.stopwatch.setStyleSheet(STOPWATCH)
         self.pause.setStyleSheet(PAUSE_BUTTON)
 
+        self.import_btn = QToolButton()
+        self.import_btn.setFixedSize(35, 35)
+        self.import_btn.setStyleSheet(IMPORT_EXPORT)
+        self.import_btn.setIcon(QIcon(resource_path("imgs/import.png")))
+
+        self.import_btn.setIconSize(QSize(100, 100))
+
+        self.import_btn.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonIconOnly
+        )
+
+        self.import_btn.clicked.connect(self.import_experiment)
+
+        self.export_btn = QToolButton()
+        self.export_btn.setFixedSize(35, 35)
+        self.export_btn.setStyleSheet(IMPORT_EXPORT)
+        self.export_btn.setIcon(QIcon(resource_path("imgs/export.png")))
+
+        self.export_btn.setIconSize(QSize(100, 100))
+
+        self.export_btn.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonIconOnly
+        )
+
+        #self.export_btn.clicked.connect(self.export_experiment)
+
         self.nav_bar.addWidget(self.btn_1)
         self.nav_bar.addSpacing(60)
         self.nav_bar.addWidget(self.btn_2)
         self.nav_bar.addSpacing(30)
         self.nav_bar.addWidget(self.btn_3)
-        self.nav_bar.addSpacing(100)
+        self.nav_bar.addSpacing(60)
+        self.nav_bar.addWidget(self.import_btn)
+        self.nav_bar.addWidget(self.export_btn)
 
         self.nav_bar.addWidget(self.run)
         self.nav_bar.addWidget(self.stopwatch)
@@ -130,6 +221,7 @@ class MainWindow(QMainWindow):
         if not self.is_running:
 
             data = {
+                "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "chambers": [
                     chamber.to_dict()
                     for chamber in self.chambers_page.chambers
@@ -1999,6 +2091,37 @@ class ChambersPage(QWidget):
         self.main_layout.addWidget(title)
         self.main_layout.addSpacing(20)
         self.main_layout.addLayout(self.chamber_layout)
+    
+    def add_existing_chamber(self, chamber):
+
+        self.chambers.append(chamber)
+
+        btn = QToolButton()
+
+        btn.setText(chamber.name)
+        btn.setIcon(
+            QIcon(resource_path("imgs/chamber.png"))
+        )
+
+        btn.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+        )
+
+        btn.setIconSize(QSize(200,200))
+        btn.setFixedSize(300,450)
+        btn.setStyleSheet(CHAMBER_BUTTON)
+
+
+        btn.clicked.connect(
+            lambda _, c=chamber, b=btn:
+            self.open_chamber(c,b)
+        )
+
+
+        self.chamber_layout.insertWidget(
+            self.chamber_layout.count()-1,
+            btn
+        )
 
     def add_chamber(self):
         self.chamber_count += 1
