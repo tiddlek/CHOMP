@@ -136,7 +136,12 @@ class MainWindow(QMainWindow):
                 ]
             }
 
-            with open("experiment.json", "w") as f:
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+            filename = f"experiment_{timestamp}.json"
+
+            filepath = os.path.join("jsons", filename)
+
+            with open(filepath, "w") as f:
                 json.dump(data, f, indent=4)
 
             timestamp = datetime.now().strftime("%H:%M:%S")
@@ -1009,6 +1014,7 @@ class PumpWindow(QWidget):
         left_layout.setContentsMargins(40, 0, 20, 0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
+        self.total_volume = 0
         self.volume = QLabel("Total Injection volume: ")
 
         self.start_row.time.textChanged.connect(self.calculate)
@@ -1041,11 +1047,16 @@ class PumpWindow(QWidget):
                 rate = float(self.rate.time.text())
 
                 if duration > 0:
-                    volume = duration * rate
-                    self.volume.setText(f"Total Injection: Volume: {volume:.3f} \u00B5L")
+                    self.total_volume = duration * rate
+                    self.volume.setText(
+                        f"Total Injection: Volume: {self.total_volume:.3f} µL"
+                    )
                 else:
+                    self.total_volume = 0
                     self.volume.setText("Total Injection: Volume: --")
+
             except ValueError:
+                self.total_volume = 0
                 self.volume.setText("Total Injection: Volume: --")
 
 
@@ -1224,7 +1235,7 @@ class PumpWindow(QWidget):
             flow_rate=flow,
             start_time=start,
             duration=duration,
-            volume = self.volume
+            volume = self.total_volume
         )
 
         self.pump.add_task(task)
