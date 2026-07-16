@@ -1,4 +1,4 @@
-class MockDAQBackend:
+class MockBackend:
     def write_voltage(self, wire_id, voltage):
         pass
     

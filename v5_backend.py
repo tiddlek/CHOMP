@@ -2,7 +2,7 @@ import serial
 import nidaqmx
 import time
 
-class NI_DAQBackend:
+class Backend:
     def __init__(self):
         self.tasks = {}
 
