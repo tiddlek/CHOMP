@@ -2,7 +2,7 @@ import serial
 import time
 
 ser = serial.Serial(
-    port="COM5",
+    port="COM7",
     baudrate=9600,
     parity=serial.PARITY_ODD,
     stopbits=serial.STOPBITS_TWO,
@@ -24,12 +24,36 @@ def stop():
     print(response)
     return response
 
-send_command("irate 0.75 ul/min")
+#clear
+send_command("civolume")
+send_command("ctvolume")
+send_command("citime")
+send_command("cttime")
+
+#check
+send_command("ivolume")
+send_command("tvolume")
+send_command("itime")
+send_command("ttime")
+send_command("irate")
+
+send_command("svolume")
+
+
+#set
+send_command("irate 0.5 ul/min")
+send_command("ttime 5")
+
+send_command("ttime")
+send_command("irate")
+
+
 send_command("irun")
-send_command("crate")
 
 
-time.sleep(10)
-stop()
+
+
+
+
 
 ser.close()

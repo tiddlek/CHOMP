@@ -120,12 +120,12 @@ class TaskScheduler:
         self.log(f"[STOP] {mfc.name} wire={wire_id}")
     
     def start_pump_task(self, pump, task):
-        self.backend.write_pump(True)
+        self.backend.write_pump(True, task.flow_rate, task.duration)
         self.log(f"[START] {pump.name} rate={task.flow_rate}")
     
     def stop_pump_task(self, pump, task):
-        self.backend.write_pump(False)
-        self.log(f"[STOP] {pump.name} rate={task.flow_rate}")
+        self.backend.write_pump(False, task.flow_rate, task.duration)
+        self.log(f"[STOP] {pump.name}")
 
     def start_light_task(self, light, task):
         self.log(f"[START] lights config={task.config}")

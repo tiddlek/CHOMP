@@ -221,21 +221,32 @@ class MainWindow(QMainWindow):
 
     def export_experiment(self):
         data = {
-                "created": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "created": datetime.now().strftime("%Y-%m-%d %H_%M_%S"),
                 "chambers": [
                     chamber.to_dict()
                     for chamber in self.chambers_page.chambers
                 ]
             }
-        save_dir = os.path.join(
-            os.path.expanduser("~"),
-            "Documents",
-            "Barber Lab",
-            "CHOMP",
-            "jsons"
-        )
         
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        home = os.path.expanduser("~")
+
+        if platform.system() == "Darwin":   # macOS
+            save_dir = os.path.join(
+                home,
+                "Documents",
+                "Barber Lab",
+                "CHOMP",
+                "jsons"
+            )
+        else:                               # Windows (or other)
+            save_dir = os.path.join(
+                home,
+                "Documents",
+                "CHOMP",
+                "jsons"
+            )
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
         filepath = os.path.join(save_dir, f"experiment_{timestamp}.json")
 
         with open(filepath, "w") as f:
@@ -2210,6 +2221,7 @@ def main():
     w.show()
 
     app.exec()
+    back.ser.close()
 
 #systemCheck()
 main()

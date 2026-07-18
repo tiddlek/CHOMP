@@ -26,13 +26,33 @@ class Backend:
 
 
         self.ser = serial.Serial(
-            port="COM5",
+            port="COM7",
             baudrate=9600,
             parity=serial.PARITY_ODD,
             stopbits=serial.STOPBITS_TWO,
             bytesize=serial.SEVENBITS,
             timeout=2
         )
+
+        #clear
+        self.send_command("civolume")
+        self.send_command("ctvolume")
+        self.send_command("citime")
+        self.send_command("cttime")
+
+        #check
+        self.send_command("ivolume")
+        self.send_command("tvolume")
+        self.send_command("itime")
+        self.send_command("ttime")
+        self.send_command("irate")
+
+    def send_command(self, cmd):
+        self.ser.write((cmd + "\r\n").encode())
+        time.sleep(0.5)
+        response = self.ser.read_all()
+        print(response)
+        return response
             
     def write_voltage(self, wire_id, voltage):
         if wire_id not in self.tasks:
@@ -49,11 +69,17 @@ class Backend:
 
 
     def write_ozone(self, on):
-        self.task[11].write(on)
+        self.tasks[11].write(on)
     
-    def write_pump(self, start):
+    def write_pump(self, start, flow_rate, duration, svolume=None):
         if start == True:
-            self.ser.write(("run" + "\r\n").encode())
+            self.ser.write((f"irate  {flow_rate} " + "uL/min" + "\r\n").encode())
+            self.ser.write((f"ttime  {duration} " + "\r\n").encode())
+            #self.ser.write((f"svolume  {svolume} " + "\r\n").encode())
+            self.send_command("ttime")
+            self.send_command("irate")
+            self.ser.write(("irun" + "\r\n").encode())
+
         elif start == False:
             self.ser.write(("stop" + "\r\n").encode())
         time.sleep(0.5)
