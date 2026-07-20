@@ -75,7 +75,7 @@ class NI_DAQ_SERIAL_CONTROLLER:
         if start == True:
             self.ser.write((f"irate  {flow_rate} " + "uL/min" + "\r\n").encode())
             self.ser.write((f"ttime  {duration} " + "\r\n").encode())
-            #self.ser.write((f"svolume  {svolume} " + "\r\n").encode())
+            self.ser.write((f"svolume  {svolume} " + "\r\n").encode())
             self.send_command("ttime")
             self.send_command("irate")
             self.ser.write(("irun" + "\r\n").encode())

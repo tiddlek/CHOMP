@@ -39,7 +39,6 @@ send_command("irate")
 
 send_command("svolume")
 
-
 #set
 send_command("irate 0.5 ul/min")
 send_command("ttime 5")
@@ -47,13 +46,6 @@ send_command("ttime 5")
 send_command("ttime")
 send_command("irate")
 
-
 send_command("irun")
-
-
-
-
-
-
 
 ser.close()

@@ -14,8 +14,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QPushButton,
     QStackedWidget, QLabel, QButtonGroup,
     QLineEdit, QToolButton, QGraphicsPathItem,
-    QTableWidget, QTableWidgetItem, QMessageBox, QPlainTextEdit)
-from PyQt6.QtGui import (QFont, QPainterPath, QFontDatabase, QIcon, QPixmap)
+    QTableWidget, QTableWidgetItem, QMessageBox, QPlainTextEdit, QInputDialog)
+from PyQt6.QtGui import (QFont, QPainterPath, QFontDatabase, QIcon)
 
 from v5_controller import *
 from v5_mock_controller import *
@@ -390,8 +390,7 @@ class ChamberWindow(QWidget):
         self.chamber = chamber
         self.button = button
         self.scheduler = scheduler
-        self.scheduler.add_light(chamber.light)
-        self.scheduler.add_ozone(chamber.ozone)
+        
 
         self.setWindowTitle(chamber.name)
         self.resize(900,760)
@@ -515,6 +514,9 @@ class ChamberWindow(QWidget):
         for pump in self.chamber.pumps:
             self.scheduler.remove_pump(pump)
 
+        print(self.chamber.light)
+        print(self.scheduler.lights)
+
         self.scheduler.remove_light(self.chamber.light)
         self.scheduler.remove_ozone(self.chamber.ozone)
 
@@ -584,7 +586,20 @@ class ChamberWindow(QWidget):
     def add_pump(self):
         pump_count = len(self.chamber.pumps) + 1
 
-        pump = Pump(f"Pump {pump_count}", 5)
+        volume, ok = QInputDialog.getDouble(
+            self,
+            "Set Volume",
+            "Volume:",
+            0.0,      # default value
+            0.0,      # minimum
+            1000.0,   # maximum
+            2         # decimal places
+        )
+
+        if not ok:
+            return
+
+        pump = Pump(f"Pump {pump_count}", volume)
         self.chamber.add_pump(pump)
         self.window().scheduler.add_pump(pump)
 
@@ -1694,7 +1709,11 @@ class LightsWindow(QWidget):
 
             # 2. remove graph item
             box = self.task_boxes.pop(row)
-            self.graph.removeItem(box)
+
+            if self.task_table.item(row, 2).text() == "c":
+                self.graph_c.removeItem(box)
+            if self.task_table.item(row, 2).text() == "m":
+                self.graph_m.removeItem(box)
 
             # 3. remove table row
             self.task_table.removeRow(row)
@@ -2143,6 +2162,8 @@ class ChambersPage(QWidget):
         self.chamber_count += 1
 
         chamber = Chamber(f"Chamber {self.chamber_count}")
+        self.scheduler.add_light(chamber.light)
+        self.scheduler.add_ozone(chamber.ozone)
         self.chambers.append(chamber)
 
         btn = QToolButton()
@@ -2222,11 +2243,9 @@ def main():
     
     app.exec()
     controller.close()
-    
 
 #systemCheck()
 main()
 
-# TODO clean up lights ui
-# TODO cleanup scheudler after delteing chamber
-# TODO Popup for syringe volume
+# TODO popup for syringe volume
+# TODO readme
