@@ -2226,7 +2226,6 @@ def main():
 #systemCheck()
 main()
 
-# TODO pump backend
-# TODO relay backend
-# TODO Save and reuse routines
-# TODO Import Export routines
+# TODO clean up lights ui
+# TODO cleanup scheudler after delteing chamber
+# TODO Popup for syringe volume
