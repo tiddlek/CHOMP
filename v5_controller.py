@@ -34,18 +34,29 @@ class NI_DAQ_SERIAL_CONTROLLER:
             timeout=2
         )
 
+        self.hamilton_700_diameters = {
+            "5.0": 0.343,
+            "10.0": 0.485,
+            "25.0": 0.729,
+            "50.0": 1.03
+        }
+
+    def clear(self):
         #clear
+        print("clear")
         self.send_command("civolume")
         self.send_command("ctvolume")
         self.send_command("citime")
         self.send_command("cttime")
-
-        #check
-        self.send_command("ivolume")
-        self.send_command("tvolume")
-        self.send_command("itime")
-        self.send_command("ttime")
-        self.send_command("irate")
+    
+    def set(self, d, sv, tv, r):
+        #set
+        print("set")
+        self.send_command(f"diameter {d} mm")
+        self.send_command(f"svolume {sv} uL")
+        self.send_command(f"tvolume {tv} uL")
+        self.send_command(f"irate {r} uL/min")
+        self.send_command("irun")
 
     def send_command(self, cmd):
         self.ser.write((cmd + "\r\n").encode())
@@ -73,12 +84,8 @@ class NI_DAQ_SERIAL_CONTROLLER:
     
     def write_pump(self, start, flow_rate, duration, svolume=None):
         if start == True:
-            self.ser.write((f"irate  {flow_rate} " + "uL/min" + "\r\n").encode())
-            self.ser.write((f"ttime  {duration} " + "\r\n").encode())
-            self.ser.write((f"svolume  {svolume} " + "\r\n").encode())
-            self.send_command("ttime")
-            self.send_command("irate")
-            self.ser.write(("irun" + "\r\n").encode())
+            self.clear()
+            self.set(self.hamilton_700_diameters[str(svolume)], svolume, flow_rate*duration, flow_rate)
 
         elif start == False:
             self.ser.write(("stop" + "\r\n").encode())

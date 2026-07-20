@@ -2247,5 +2247,5 @@ def main():
 #systemCheck()
 main()
 
-# TODO popup for syringe volume
+# TODO change syringe logic to volume and rate
 # TODO readme

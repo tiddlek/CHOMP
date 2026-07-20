@@ -24,28 +24,46 @@ def stop():
     print(response)
     return response
 
-#clear
-send_command("civolume")
-send_command("ctvolume")
-send_command("citime")
-send_command("cttime")
+def clear():
+    #clear
+    print("clear")
+    send_command("civolume")
+    send_command("ctvolume")
+    send_command("citime")
+    send_command("cttime")
 
-#check
-send_command("ivolume")
-send_command("tvolume")
-send_command("itime")
-send_command("ttime")
-send_command("irate")
+def check():
+    #check
+    print("check")
+    send_command("ivolume")
+    send_command("tvolume")
+    send_command("itime")
+    send_command("ttime")
+    send_command("irate")
+    send_command("svolume")
+    send_command("diameter")
 
-send_command("svolume")
+def set(d, sv, tv, r):
+    #set
+    print("set")
+    send_command(f"diameter {d} mm")
+    send_command(f"svolume {sv} uL")
+    send_command(f"tvolume {tv} uL")
+    send_command(f"irate {r} uL/min")
+    send_command("irun")
 
-#set
-send_command("irate 0.5 ul/min")
-send_command("ttime 5")
 
-send_command("ttime")
-send_command("irate")
+hamilton_700_diameters = {
+    "5": 0.343,
+    "10": 0.485,
+    "25": 0.729,
+    "50": 1.03
+}
 
-send_command("irun")
+
+clear()
+
+v = 10
+set(hamilton_700_diameters[str(v)], v, 1, 10)
 
 ser.close()
