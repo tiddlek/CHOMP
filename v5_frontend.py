@@ -17,9 +17,9 @@ from PyQt6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QMessageBox, QPlainTextEdit)
 from PyQt6.QtGui import (QFont, QPainterPath, QFontDatabase, QIcon, QPixmap)
 
-from v5_backend import Backend
-from v5_backend_mock import MockBackend
-from v5_scheduler import TaskScheduler
+from v5_controller import *
+from v5_mock_controller import *
+from v5_scheduler import *
 
 from v5_tasks import *
 from v5_devices import *
@@ -2206,10 +2206,10 @@ def resource_path(relative_path):
 
 def main():
     if platform.system() == "Windows":
-        back = Backend()
+        controller = NI_DAQ_SERIAL_CONTROLLER()
     elif platform.system() == "Darwin":  # macOS
-        back = MockBackend()
-    scheduler = TaskScheduler(back)
+        controller = Mock_Controller()
+    scheduler = TaskScheduler(controller)
 
     app = QApplication([])
     
@@ -2219,9 +2219,10 @@ def main():
 
     w = MainWindow(scheduler)
     w.show()
-
+    
     app.exec()
-    back.ser.close()
+    controller.close()
+    
 
 #systemCheck()
 main()

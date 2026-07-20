@@ -2,7 +2,7 @@ import serial
 import nidaqmx
 import time
 
-class Backend:
+class NI_DAQ_SERIAL_CONTROLLER:
     def __init__(self):
         self.tasks = {}
 
@@ -86,3 +86,6 @@ class Backend:
         response = self.ser.read_all()
         print(response)
         return response
+    
+    def close(self):
+        self.ser.close()

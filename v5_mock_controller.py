@@ -1,4 +1,4 @@
-class MockBackend:
+class Mock_Controller:
     def write_voltage(self, wire_id, voltage):
         pass
     
@@ -9,4 +9,7 @@ class MockBackend:
         pass
     
     def write_pump(self, rate):
+        pass
+    
+    def close(self):
         pass
