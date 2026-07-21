@@ -368,13 +368,16 @@ class FlowInput(QWidget):
         self.time = QLineEdit()
         self.time.setStyleSheet(LINE_EDIT)
         if label_text == "Flow":
-            self.slpm_unit = QLabel("SLPM")
+            self.unit = QLabel("SLPM")
         elif label_text == "Rate":
-            self.slpm_unit = QLabel("\u00B5L/sec")
+            self.unit = QLabel("\u00B5L/sec")
+        elif label_text == "Volume":
+            print("here")
+            self.unit = QLabel("uL")
     
         layout.addWidget(self.label)
         layout.addWidget(self.time)
-        layout.addWidget(self.slpm_unit)
+        layout.addWidget(self.unit)
         layout.addStretch()
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -1136,17 +1139,17 @@ class PumpWindow(QWidget):
         title = QLabel("Create Task")
         title.setStyleSheet(PAGE_TITLE)
         self.start_row = TimeInput("Start")
-        self.duration = TimeInput("Duration")
+        self.volume_row = FlowInput("Volume")
         self.rate = FlowInput("Rate")
         
         left_layout.setContentsMargins(40, 0, 20, 0)
         left_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self.total_volume = 0
-        self.volume = QLabel("Total Injection volume: ")
+        self.total_time = 0
+        self.time_row = QLabel("Total Injection time: ")
 
         self.start_row.time.textChanged.connect(self.calculate)
-        self.duration.time.textChanged.connect(self.calculate)
+        self.volume_row.time.textChanged.connect(self.calculate)
         self.rate.time.textChanged.connect(self.calculate)
 
         self.task_button = self.create_task_button()
@@ -1155,13 +1158,13 @@ class PumpWindow(QWidget):
         left_layout.addSpacing(6)
         left_layout.addWidget(self.start_row)
         left_layout.addSpacing(6)
-        left_layout.addWidget(self.duration)
+        left_layout.addWidget(self.volume_row)
         left_layout.addSpacing(6)
 
         left_layout.addWidget(self.rate)
 
         left_layout.addSpacing(5)
-        left_layout.addWidget(self.volume)
+        left_layout.addWidget(self.time_row)
         left_layout.addWidget(self.task_button)
 
   
@@ -1171,21 +1174,21 @@ class PumpWindow(QWidget):
     def calculate(self):
             try:
                 start = float(self.start_row.time.text())
-                duration = float(self.duration.time.text())
+                volume = float(self.volume_row.time.text())
                 rate = float(self.rate.time.text())
 
-                if duration > 0:
-                    self.total_volume = duration * rate
-                    self.volume.setText(
-                        f"Total Injection: Volume: {self.total_volume:.3f} µL"
+                if volume > 0:
+                    self.total_time = volume / rate
+                    self.time_row.setText(
+                        f"Total Injection Time: {self.total_time:.3f} sec"
                     )
                 else:
-                    self.total_volume = 0
-                    self.volume.setText("Total Injection: Volume: --")
+                    self.total_time = 0
+                    self.time_row.setText("Total Injection Time: --")
 
             except ValueError:
-                self.total_volume = 0
-                self.volume.setText("Total Injection: Volume: --")
+                self.total_time = 0
+                self.time_row.setText("Total Injection Time: --")
 
 
     def create_right(self):
@@ -1333,7 +1336,7 @@ class PumpWindow(QWidget):
     def add_task(self):
         try:
             start = int(self.start_row.time.text())
-            duration = int(self.duration.time.text())
+            duration = float(self.total_time)
             flow = float(self.rate.time.text())
 
             if flow < 0:
@@ -1363,14 +1366,14 @@ class PumpWindow(QWidget):
             flow_rate=flow,
             start_time=start,
             duration=duration,
-            volume = self.total_volume
+            volume = int(self.volume_row.time.text())
         )
 
         self.pump.add_task(task)
         self.add_task_to_ui(task)
 
         self.start_row.time.clear()
-        self.duration.time.clear()
+        self.volume_row.time.clear()
         self.rate.time.clear()
 
         max_stop = max(

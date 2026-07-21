@@ -52,14 +52,12 @@ def set(d, sv, tv, r):
     send_command(f"irate {r} uL/min")
     send_command("irun")
 
-
 hamilton_700_diameters = {
     "5": 0.343,
     "10": 0.485,
     "25": 0.729,
     "50": 1.03
 }
-
 
 clear()
 
