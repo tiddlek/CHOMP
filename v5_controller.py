@@ -54,8 +54,8 @@ class NI_DAQ_SERIAL_CONTROLLER:
         print("set")
         self.send_command(f"diameter {d} mm")
         self.send_command(f"svolume {sv} uL")
+        self.send_command(f"irate {r} uL/sec")
         self.send_command(f"tvolume {tv} uL")
-        self.send_command(f"irate {r} uL/min")
         self.send_command("irun")
 
     def send_command(self, cmd):
@@ -84,7 +84,6 @@ class NI_DAQ_SERIAL_CONTROLLER:
     
     def write_pump(self, start, flow_rate, duration, svolume=None):
         if start == True:
-            self.clear()
             self.set(self.hamilton_700_diameters[str(svolume)], svolume, flow_rate*duration, flow_rate)
 
         elif start == False:

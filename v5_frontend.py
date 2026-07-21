@@ -372,7 +372,6 @@ class FlowInput(QWidget):
         elif label_text == "Rate":
             self.unit = QLabel("\u00B5L/sec")
         elif label_text == "Volume":
-            print("here")
             self.unit = QLabel("uL")
     
         layout.addWidget(self.label)
@@ -516,9 +515,6 @@ class ChamberWindow(QWidget):
 
         for pump in self.chamber.pumps:
             self.scheduler.remove_pump(pump)
-
-        print(self.chamber.light)
-        print(self.scheduler.lights)
 
         self.scheduler.remove_light(self.chamber.light)
         self.scheduler.remove_ozone(self.chamber.ozone)

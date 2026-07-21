@@ -124,7 +124,7 @@ class TaskScheduler:
         self.log(f"[START] {pump.name} rate={task.flow_rate}")
     
     def stop_pump_task(self, pump, task):
-        self.backend.write_pump(False, task.flow_rate, task.duration)
+        #self.backend.write_pump(False, task.flow_rate, task.duration)
         self.log(f"[STOP] {pump.name}")
 
     def start_light_task(self, light, task):
