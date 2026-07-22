@@ -84,6 +84,7 @@ class MainWindow(QMainWindow):
 
             for mfc in chamber.mfcs:
                 self.scheduler.add_mfc(mfc)
+                self.scheduler.register_mfc_wire(mfc, mfc.wire)
 
             for pump in chamber.pumps:
                 self.scheduler.add_pump(pump)
@@ -688,6 +689,7 @@ class MFCWindow(QWidget):
     def set_wire(self, wire):
         try:
             self.scheduler.register_mfc_wire(self.mfc, wire)
+            print("here")
         except ValueError as e:
             QMessageBox.warning(self, "Wire Conflict", str(e))
             return
@@ -2246,5 +2248,5 @@ def main():
 #systemCheck()
 main()
 
-# TODO change syringe logic to volume and rate
+# TODO fix volume on import and export
 # TODO readme
