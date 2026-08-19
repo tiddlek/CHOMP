@@ -2241,5 +2241,6 @@ def main():
 #systemCheck()
 main()
 
-# TODO fix volume on import and export
+# TODO check import and export is correct for pumps
+# TODO place MFCs and Pumps on COMs
 # TODO readme
