@@ -229,29 +229,22 @@ class MainWindow(QMainWindow):
                 ]
             }
         
-        home = os.path.expanduser("~")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H_%M_%S")
 
-        if platform.system() == "Darwin":   # macOS
-            save_dir = os.path.join(
-                home,
-                "Documents",
-                "Barber Lab",
-                "CHOMP",
-                "jsons"
-            )
-        else:                               # Windows (or other)
-            save_dir = os.path.join(
-                home,
-                "Documents",
-                "CHOMP",
-                "jsons"
-            )
-        
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-        filepath = os.path.join(save_dir, f"experiment_{timestamp}.json")
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Experiment",
+            f"experiment_{timestamp}.json",
+            "JSON Files (*.json)"
+        )
 
-        with open(filepath, "w") as f:
-            json.dump(data, f, indent=4)
+        if filepath:
+            with open(filepath, "w") as f:
+                json.dump(data, f, indent=4)
+
+        self.scheduler.log(
+            f"[IMPORT] Loaded {len(data.get('chambers', []))} chambers"
+        )
 
     def start_timer(self):
         if not self.is_running:
