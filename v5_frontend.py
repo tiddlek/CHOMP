@@ -1,21 +1,43 @@
 import os
 import sys
 import nidaqmx
-from PyQt6.QtWidgets import QFileDialog
 import json
 import platform
 import pyqtgraph as pg
 from styles import *
 from datetime import datetime
 from pyqtgraph import AxisItem
-from PyQt6.QtCore import Qt, QSize, QTimer
+
+from PyQt6.QtCore import (
+    Qt, 
+    QSize, 
+    QTimer)
+
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget,
-    QVBoxLayout, QHBoxLayout, QPushButton,
-    QStackedWidget, QLabel, QButtonGroup,
-    QLineEdit, QToolButton, QGraphicsPathItem,
-    QTableWidget, QTableWidgetItem, QMessageBox, QPlainTextEdit, QInputDialog)
-from PyQt6.QtGui import (QFont, QPainterPath, QFontDatabase, QIcon)
+    QApplication, 
+    QMainWindow, 
+    QWidget,
+    QVBoxLayout, 
+    QHBoxLayout, 
+    QPushButton,
+    QStackedWidget, 
+    QLabel, 
+    QButtonGroup,
+    QLineEdit, 
+    QToolButton, 
+    QGraphicsPathItem,
+    QTableWidget, 
+    QTableWidgetItem, 
+    QMessageBox, 
+    QPlainTextEdit, 
+    QInputDialog,
+    QFileDialog)
+
+from PyQt6.QtGui import (
+    QFont, 
+    QPainterPath, 
+    QFontDatabase, 
+    QIcon)
 
 from v5_controller import *
 from v5_mock_controller import *
@@ -25,6 +47,25 @@ from v5_tasks import *
 from v5_devices import *
 
 class MainWindow(QMainWindow):
+
+    """
+    Represents the main window that faces the user when the application is opened. 
+    The page contains the navbar in the top and the logo in the middle.
+
+    Attributes
+    ----------
+    scheduler : TaskScheduler
+        The scheduler is passed into the main window to interact with the timer.
+        The timer is located in the navbar of the main window
+
+    timer : QTimer
+        Qt object that iterates over time and has start and stop functionality
+
+    elapsed_seconds : int
+        number of seconds displayed on the QTimer object. 
+        Used for calculations involving time
+    """
+
     def __init__(self, scheduler):
         super().__init__()
 
@@ -39,9 +80,10 @@ class MainWindow(QMainWindow):
         self.create_pages()
         self.create_navbar()
         self.setup_layout()
+
     def setup_window(self):
         
-        self.setWindowTitle("CHOMP")
+        self.setWindowTitle("atmosCHOMP")
         self.resize(1140,760)
 
         self.central = QWidget()
@@ -117,9 +159,13 @@ class MainWindow(QMainWindow):
     def create_navbar(self):
         self.nav_bar = QHBoxLayout()
 
-        self.btn_1 = QPushButton("CHOMP")
+        self.btn_1 = QPushButton()
         self.btn_2 = QPushButton("Chambers")
         self.btn_3 = QPushButton("Log")
+
+        self.btn_1.setIcon(QIcon(resource_path("imgs/CHOMP.Logo.d.png")))
+        self.btn_1.setFixedSize(200, 50)
+        self.btn_1.setIconSize(QSize(200, 200))
 
         self.run = QPushButton("Run")
         self.reset = QPushButton("Reset")
@@ -158,11 +204,11 @@ class MainWindow(QMainWindow):
         self.export_btn.clicked.connect(self.export_experiment)
 
         self.nav_bar.addWidget(self.btn_1)
-        self.nav_bar.addSpacing(60)
+        self.nav_bar.addSpacing(10)
         self.nav_bar.addWidget(self.btn_2)
-        self.nav_bar.addSpacing(30)
+        self.nav_bar.addSpacing(20)
         self.nav_bar.addWidget(self.btn_3)
-        self.nav_bar.addSpacing(60)
+        self.nav_bar.addSpacing(120)
         self.nav_bar.addWidget(self.import_btn)
         self.nav_bar.addSpacing(5)
 
@@ -317,17 +363,24 @@ class HomePage(QWidget):
         super().__init__()
         layout = QVBoxLayout(self)
 
-        title = QLabel("CHOMP")
+        """title = QLabel("CHOMP")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(f"font-size: 62px; font-weight: bold; color: {BLUE};")
 
         subtitle = QLabel("atmospheriC cHamber\nautOMation Platform")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle.setStyleSheet("font-size: 24px; font-weight: regular; color: black;")
+        """
+
+        title = QPushButton()
+        title.setIcon(QIcon("imgs/CHOMP.Header.b.png"))
+        title.setStyleSheet(MAIN_LOGO)
+        title.setFixedSize(900, 400)
+        title.setIconSize(QSize(800, 800))
 
         layout.addStretch()
-        layout.addWidget(title)
-        layout.addWidget(subtitle)
+        layout.addWidget(title, alignment=Qt.AlignmentFlag.AlignCenter)
+        #layout.addWidget(subtitle)
         layout.addStretch()
 
 class TimeInput(QWidget):

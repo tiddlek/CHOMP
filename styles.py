@@ -385,3 +385,21 @@ QToolButton:pressed {{
     color: white;
 }}
 """
+
+MAIN_LOGO = f"""
+    QPushButton {{
+        background-color: {BACKGROUND};
+        border: none;
+        padding: 0px;
+    }}
+
+    QPushButton:hover {{
+        background-color: {BACKGROUND};
+        border: none;
+    }}
+
+    QPushButton:pressed {{
+        background-color: {BACKGROUND};
+        border: none;
+    }}
+"""
