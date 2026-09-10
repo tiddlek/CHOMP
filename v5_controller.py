@@ -24,16 +24,6 @@ class NI_DAQ_SERIAL_CONTROLLER:
         task.do_channels.add_do_chan(channel)
         self.tasks[ozone] = task
 
-
-        self.ser = serial.Serial(
-            port="COM7",
-            baudrate=9600,
-            parity=serial.PARITY_ODD,
-            stopbits=serial.STOPBITS_TWO,
-            bytesize=serial.SEVENBITS,
-            timeout=2
-        )
-
         self.hamilton_700_diameters = {
             "5.0": 0.343,
             "10.0": 0.485,
@@ -49,19 +39,19 @@ class NI_DAQ_SERIAL_CONTROLLER:
         self.send_command("citime")
         self.send_command("cttime")
     
-    def set(self, d, sv, tv, r):
+    def set(self, d, sv, tv, r, p):
         #set
         print("set")
-        self.send_command(f"diameter {d} mm")
-        self.send_command(f"svolume {sv} uL")
-        self.send_command(f"irate {r} uL/sec")
-        self.send_command(f"tvolume {tv} uL")
-        self.send_command("irun")
+        self.send_command(f"diameter {d} mm", p)
+        self.send_command(f"svolume {sv} uL", p)
+        self.send_command(f"irate {r} uL/sec", p)
+        self.send_command(f"tvolume {tv} uL", p)
+        self.send_command("irun", p)
 
-    def send_command(self, cmd):
+    def send_command(self, cmd, ser):
         self.ser.write((cmd + "\r\n").encode())
         time.sleep(0.5)
-        response = self.ser.read_all()
+        response = ser.read_all()
         print(response)
         return response
             
@@ -82,9 +72,9 @@ class NI_DAQ_SERIAL_CONTROLLER:
     def write_ozone(self, on):
         self.tasks[11].write(on)
     
-    def write_pump(self, start, flow_rate, duration, svolume=None):
+    def write_pump(self, start, flow_rate, duration, svolume, port):
         if start == True:
-            self.set(self.hamilton_700_diameters[str(svolume)], svolume, flow_rate*duration, flow_rate)
+            self.set(self.hamilton_700_diameters[str(svolume)], svolume, flow_rate*duration, flow_rate, port)
 
         elif start == False:
             self.ser.write(("stop" + "\r\n").encode())

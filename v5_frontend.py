@@ -7,6 +7,7 @@ import pyqtgraph as pg
 from styles import *
 from datetime import datetime
 from pyqtgraph import AxisItem
+import serial.tools.list_ports
 
 from PyQt6.QtCore import (
     Qt, 
@@ -30,7 +31,10 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem, 
     QMessageBox, 
     QPlainTextEdit, 
-    QInputDialog,
+    QDialog,
+    QComboBox,
+    QDialogButtonBox,
+    QFormLayout,
     QFileDialog)
 
 from PyQt6.QtGui import (
@@ -632,20 +636,48 @@ class ChamberWindow(QWidget):
     def add_pump(self):
         pump_count = len(self.chamber.pumps) + 1
 
-        volume, ok = QInputDialog.getDouble(
-            self,
-            "Set Volume",
-            "Volume:",
-            0.0,      # default value
-            0.0,      # minimum
-            1000.0,   # maximum
-            2         # decimal places
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Pump Settings")
+
+        layout = QVBoxLayout(dialog)
+        form = QFormLayout()
+
+        # Volume dropdown
+        volume_box = QComboBox()
+        volume_box.addItems(["5.0", "10.0", "25.0", "50.0"])
+
+        # COM port dropdown
+        com_box = QComboBox()
+        com_box.addItems([f"COM{i}" for i in range(1, 21)])
+
+        form.addRow("Volume:", volume_box)
+        form.addRow("COM Port:", com_box)
+
+        layout.addLayout(form)
+
+        # OK / Cancel buttons
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
         )
 
-        if not ok:
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        layout.addWidget(buttons)
+
+
+        # Show dialog
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
-        pump = Pump(f"Pump {pump_count}", volume)
+        # Get selected values
+        volume = float(volume_box.currentText())
+        com_port = com_box.currentText()
+
+        pump = Pump(f"Pump {pump_count}", volume, com_port)
+
+        print(pump.port)
         self.chamber.add_pump(pump)
         self.window().scheduler.add_pump(pump)
 

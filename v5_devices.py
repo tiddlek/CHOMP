@@ -1,5 +1,6 @@
 from abc import ABC
 from v5_tasks import *
+import serial
 
 class Chamber:
     def __init__(self, name):
@@ -116,17 +117,31 @@ class MFC(Device):
         return mfc
 
 class Pump(Device):
-    def __init__(self, name, volume=None, diameter=None):
+    def __init__(self, name, volume, port):
         super().__init__(name)
         self.volume = volume
-        self.diameter = diameter
-    
+        self.port = port
+
+        
+        try:
+            self.ser = serial.Serial(
+                port=self.port,
+                baudrate=9600,
+                parity=serial.PARITY_ODD,
+                stopbits=serial.STOPBITS_TWO,
+                bytesize=serial.SEVENBITS,
+                timeout=2
+            )
+
+        except serial.SerialException:
+            print(f"No port found: {self.port}")
+            self.ser = None
+
     def to_dict(self):
         data = super().to_dict()
 
         data["type"] = "Pump"
         data["volume"] = self.volume
-        data["diameter"] = self.diameter
 
         return data
     
@@ -136,7 +151,6 @@ class Pump(Device):
         pump = cls(
             name=data["name"],
             volume=data.get("volume"),
-            diameter=data.get("diameter")
         )
 
         for task_data in data.get("tasks", []):
