@@ -7,7 +7,6 @@ class TaskScheduler:
         self.lights = []
         self.ozones = []
         self.current_time = 0
-        self.wire_map = {}
         self.SAFE_SLPM = 3.5
         self.log_callback = None
 
@@ -20,19 +19,6 @@ class TaskScheduler:
 
     def add_mfc(self, mfc):
         self.mfcs.append(mfc)
-
-    def register_mfc_wire(self, mfc, wire_id):
-        if wire_id in self.wire_map:
-            raise ValueError(
-                f"Wire {wire_id} already assigned to {self.wire_map[wire_id].name}"
-            )
-
-        for w, existing in list(self.wire_map.items()):
-            if existing == mfc:
-                del self.wire_map[w]
-
-        self.wire_map[wire_id] = mfc
-        mfc.wire = wire_id
 
     def add_pump(self, pump):
         self.pumps.append(pump)
@@ -106,9 +92,7 @@ class TaskScheduler:
 
     def start_mfc_task(self, mfc, task, wire_id=None):
         slpm = max(0.0, min(task.flow_rate, 10.0))
-        voltage = slpm / 10.0
-
-        self.backend.write_voltage(wire_id, voltage)
+        self.backend.send_mfc_command(slpm, mfc.ser)
 
         self.log(f"[START] {mfc.name} wire={wire_id} flow={slpm}")
 

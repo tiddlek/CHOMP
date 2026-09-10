@@ -91,15 +91,30 @@ class Device(ABC):
         }
 
 class MFC(Device):
-    def __init__(self, name):
+    def __init__(self, name, port, max):
         super().__init__(name)
-        self.wire = ""
+        self.port = port
+        self.max = max
+
+        try:
+            self.ser = serial.Serial(
+                port=self.port,
+                baudrate=9600,
+                parity=serial.PARITY_ODD,
+                stopbits=serial.STOPBITS_TWO,
+                bytesize=serial.SEVENBITS,
+                timeout=2
+            )
+
+        except serial.SerialException:
+            print(f"No port found: {self.port}")
+            self.ser = None
 
     def to_dict(self):
         data = super().to_dict()
 
         data["type"] = "MFC"
-        data["wire"] = self.wire
+        data["port"] = self.port
 
         return data
 
@@ -108,7 +123,7 @@ class MFC(Device):
 
         mfc = cls(data["name"])
 
-        mfc.wire = data.get("wire")
+        mfc.port = data.get("port")
 
         for task_data in data.get("tasks", []):
             task = MFCTask.from_dict(task_data)

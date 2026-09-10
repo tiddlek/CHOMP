@@ -54,6 +54,22 @@ class NI_DAQ_SERIAL_CONTROLLER:
         response = ser.read_all()
         print(response)
         return response
+
+    def send_mfc_command(self, rate, ser):
+        # Clear anything waiting in the input buffer
+        ser.reset_input_buffer()
+
+        # Set MFC to 1.0 SLPM
+        ser.write(f"as{rate}\r".encode())
+        ser.flush()
+
+        time.sleep(0.2)
+
+        # Read the response
+        data = ser.read(ser.in_waiting)
+
+        print("Response:")
+        print(data.decode(errors="replace"))
             
     def write_voltage(self, wire_id, voltage):
         if wire_id not in self.tasks:

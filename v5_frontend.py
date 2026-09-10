@@ -130,7 +130,6 @@ class MainWindow(QMainWindow):
 
             for mfc in chamber.mfcs:
                 self.scheduler.add_mfc(mfc)
-                self.scheduler.register_mfc_wire(mfc, mfc.wire)
 
             for pump in chamber.pumps:
                 self.scheduler.add_pump(pump)
@@ -627,7 +626,45 @@ class ChamberWindow(QWidget):
     def add_mfc(self):
         mfc_count = len(self.chamber.mfcs) + 1
 
-        mfc = MFC(f"MFC {mfc_count}")
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Pump Settings")
+
+        layout = QVBoxLayout(dialog)
+        form = QFormLayout()
+
+        # Volume dropdown
+        volume_box = QComboBox()
+        volume_box.addItems(["0.01", "0.10", "1.00", "5.00", "10.0", "50.0"])
+
+        # COM port dropdown
+        com_box = QComboBox()
+        com_box.addItems([f"COM{i}" for i in range(1, 21)])
+
+        form.addRow("Max SLPM:", volume_box)
+        form.addRow("COM Port:", com_box)
+
+        layout.addLayout(form)
+
+        # OK / Cancel buttons
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
+        )
+
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        layout.addWidget(buttons)
+
+        # Show dialog
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        # Get selected values
+        volume = float(volume_box.currentText())
+        com_port = com_box.currentText()
+
+        mfc = MFC(f"MFC {mfc_count}", com_port, volume)
         self.chamber.add_mfc(mfc)
         self.window().scheduler.add_mfc(mfc)
 
@@ -754,23 +791,7 @@ class MFCWindow(QWidget):
 
         layout.addWidget(self.graph)
         
-        if self.mfc.wire == 1:
-            self.mfc1.setChecked(True)
-        elif self.mfc.wire == 2:
-            self.mfc2.setChecked(True)
-        elif self.mfc.wire == 3:
-            self.mfc3.setChecked(True)
-        
         self.load_tasks()
-    
-     
-    def set_wire(self, wire):
-        try:
-            self.scheduler.register_mfc_wire(self.mfc, wire)
-            print("here")
-        except ValueError as e:
-            QMessageBox.warning(self, "Wire Conflict", str(e))
-            return
 
     def closeEvent(self, event):
         self.button.setEnabled(True)
@@ -786,57 +807,18 @@ class MFCWindow(QWidget):
         title.setStyleSheet(PAGE_TITLE)
         header_layout.setContentsMargins(40, 40, 0, 0)
 
-        self.mfc1 = QPushButton("1")
-        self.mfc2 = QPushButton("2")
-        self.mfc3 = QPushButton("3")
-
-        self.mfc1.setCheckable(True)
-        self.mfc2.setCheckable(True)
-        self.mfc3.setCheckable(True)
-
-        self.mfc1.setFixedSize(28,28)
-        self.mfc2.setFixedSize(28,28)
-        self.mfc3.setFixedSize(28,28)
-
-        self.mfc1.setStyleSheet(WIRE_BUTTON)
-        self.mfc2.setStyleSheet(WIRE_BUTTON)
-        self.mfc3.setStyleSheet(WIRE_BUTTON)
-
-        if self.mfc.wire == 1:
-            self.mfc1.setChecked(True)
-        elif self.mfc.wire == 2:
-            self.mfc2.setChecked(True)
-        elif self.mfc.wire == 3:
-            self.mfc3.setChecked(True)
-
-
-        self.mfc_group = QButtonGroup(self)
-        self.mfc_group.setExclusive(True)
-
-        self.mfc_group.addButton(self.mfc1, 1)
-        self.mfc_group.addButton(self.mfc2, 2)
-        self.mfc_group.addButton(self.mfc3, 3)
-
-        self.mfc_group.idClicked.connect(self.set_wire)
-
         delete = QPushButton("Delete MFC")
         delete.setStyleSheet(RESET_BUTTON)
         delete.clicked.connect(self.delete_mfc)
 
         header_layout.addWidget(title)
         header_layout.addSpacing(10)
-        header_layout.addWidget(self.mfc1)
-        header_layout.addWidget(self.mfc2)
-        header_layout.addWidget(self.mfc3)
         header_layout.addWidget(delete)
         header_layout.addStretch()
 
         return header_layout
     
     def delete_mfc(self):
-
-        if self.mfc.wire in self.scheduler.wire_map:
-            del self.scheduler.wire_map[self.mfc.wire]
 
         if self.mfc in self.scheduler.mfcs:
             self.scheduler.mfcs.remove(self.mfc)
@@ -1045,15 +1027,6 @@ class MFCWindow(QWidget):
         except ValueError as e:
             QMessageBox.warning(self, "Invalid Input", "Enter seconds in whole numbers")
             return
-        
-        if not self.mfc1.isChecked() and not self.mfc2.isChecked() and not self.mfc3.isChecked():
-            QMessageBox.warning(
-                self,
-                "No Wire Selected",
-                "Select a Wire."
-            )
-            return
-
 
 
         task = MFCTask(
@@ -2322,8 +2295,9 @@ def main():
     
     app.exec()
 
-    for pump in w.chambers_page.chambers.pumps:
-        pump.ser.close()
+    for chamber in w.chambers_page.chambers:
+        for pump in chamber.pumps:
+            pump.ser.close()
     controller.close()
 
 #systemCheck()
