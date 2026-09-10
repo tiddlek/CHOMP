@@ -2,7 +2,7 @@ import serial
 import time
 
 ser = serial.Serial(
-    port="COM7",
+    port="COM8",
     baudrate=9600,
     parity=serial.PARITY_ODD,
     stopbits=serial.STOPBITS_TWO,
@@ -11,10 +11,18 @@ ser = serial.Serial(
 )
 
 def send_command(cmd):
-    ser.write((cmd + "\r\n").encode())
-    time.sleep(0.5)
+    print(f"Sending: {cmd}")
+
+    ser.write((cmd + "\r").encode())
+    ser.flush()
+
+    time.sleep(0.2)
+
     response = ser.read_all()
-    print(response)
+
+    print("Raw:", repr(response))
+    print("Decoded:", response.decode(errors="replace"))
+
     return response
 
 def clear():
