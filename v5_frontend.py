@@ -2321,6 +2321,9 @@ def main():
     w.show()
     
     app.exec()
+
+    for pump in w.chambers_page.chambers.pumps:
+        pump.ser.close()
     controller.close()
 
 #systemCheck()

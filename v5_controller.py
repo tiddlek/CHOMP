@@ -49,7 +49,7 @@ class NI_DAQ_SERIAL_CONTROLLER:
         self.send_command("irun", p)
 
     def send_command(self, cmd, ser):
-        self.ser.write((cmd + "\r\n").encode())
+        ser.write((cmd + "\r\n").encode())
         time.sleep(0.5)
         response = ser.read_all()
         print(response)
@@ -79,7 +79,7 @@ class NI_DAQ_SERIAL_CONTROLLER:
         elif start == False:
             self.ser.write(("stop" + "\r\n").encode())
         time.sleep(0.5)
-        response = self.ser.read_all()
+        response = port.read_all()
         print(response)
         return response
     
