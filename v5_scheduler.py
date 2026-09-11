@@ -48,9 +48,9 @@ class TaskScheduler:
         self.current_time = current_time
 
         # MFCs
-        for wire_id, mfc in self.wire_map.items():
+        for mfc in self.mfcs:
             for task in mfc.tasks:
-                self.check_task(mfc, task, current_time, wire_id)
+                self.check_task(mfc, task, current_time)
 
         # Pumps
         for pump in self.pumps:
@@ -66,12 +66,12 @@ class TaskScheduler:
             for task in ozone.tasks:
                 self.check_task(ozone, task, current_time)
         
-    def check_task(self, device, task, current_time, wire_id=None):
+    def check_task(self, device, task, current_time):
 
         if not task.active and task.start_time <= current_time < task.stop_time:
             task.active = True
             if isinstance(device, MFC):
-                self.start_mfc_task(device, task, wire_id)
+                self.start_mfc_task(device, task)
             elif isinstance(device, Pump):
                 self.start_pump_task(device, task)
             elif isinstance(device, Light):
@@ -82,7 +82,7 @@ class TaskScheduler:
         if task.active and current_time >= task.stop_time:
             task.active = False
             if isinstance(device, MFC):
-                self.stop_mfc_task(device, task, wire_id)
+                self.stop_mfc_task(device, task)
             elif isinstance(device, Pump):
                 self.stop_pump_task(device, task)
             elif isinstance(device, Light):
@@ -90,18 +90,16 @@ class TaskScheduler:
             elif isinstance(device, Ozone):
                 self.stop_ozone_task(device, task)
 
-    def start_mfc_task(self, mfc, task, wire_id=None):
+    def start_mfc_task(self, mfc, task):
         slpm = max(0.0, min(task.flow_rate, 10.0))
         self.backend.send_mfc_command(slpm, mfc.ser)
 
-        self.log(f"[START] {mfc.name} wire={wire_id} flow={slpm}")
+        self.log(f"[START] {mfc.name} port={mfc.port} flow={slpm}")
 
-    def stop_mfc_task(self, mfc, task, wire_id):
-        voltage = self.SAFE_SLPM / 10.0
+    def stop_mfc_task(self, mfc, task):
+        self.backend.send_mfc_command(self.SAFE_SLPM, mfc.ser)
 
-        self.backend.write_voltage(wire_id, voltage)
-
-        self.log(f"[STOP] {mfc.name} wire={wire_id}")
+        self.log(f"[STOP] {mfc.name} port={mfc.port}")
     
     def start_pump_task(self, pump, task):
         self.backend.write_pump(True, task.flow_rate, task.duration, pump.volume, pump.ser)
@@ -130,11 +128,6 @@ class TaskScheduler:
     def remove_mfc(self, mfc):
         if mfc in self.mfcs:
             self.mfcs.remove(mfc)
-
-        for wire, device in list(self.wire_map.items()):
-            if device == mfc:
-                del self.wire_map[wire]
-
 
     def remove_pump(self, pump):
         if pump in self.pumps:

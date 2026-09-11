@@ -56,26 +56,30 @@ class NI_DAQ_SERIAL_CONTROLLER:
         return response
 
     def send_mfc_command(self, rate, ser):
+
         # Clear anything waiting in the input buffer
         ser.reset_input_buffer()
 
-        # Set MFC to 1.0 SLPM
-        ser.write(f"as{rate}\r".encode())
+        # Build command
+        command = f"as{rate}\r"
+
+        print(f"Sending: {repr(command)}")
+
+        # Send command
+        ser.write(command.encode("ascii"))
         ser.flush()
 
-        time.sleep(0.2)
+        # Give the MFC time to respond
+        time.sleep(0.5)
 
-        # Read the response
-        data = ser.read(ser.in_waiting)
+        # Read response
+        data = ser.read_all()
 
         print("Response:")
         print(data.decode(errors="replace"))
             
-    def write_voltage(self, wire_id, voltage):
-        if wire_id not in self.tasks:
-            raise ValueError(f"No DAQ channel for wire {wire_id}")
-
-        self.tasks[wire_id].write(voltage)
+    def write_mfc(self, rate, ser):
+        self.send_mfc_command(rate, ser)
     
     def write_lights(self, config, on):
         if config == "c":
@@ -88,16 +92,13 @@ class NI_DAQ_SERIAL_CONTROLLER:
     def write_ozone(self, on):
         self.tasks[11].write(on)
     
-    def write_pump(self, start, flow_rate, duration, svolume, port):
+    def write_pump(self, start, flow_rate, duration, svolume, ser):
         if start == True:
-            self.set(self.hamilton_700_diameters[str(svolume)], svolume, flow_rate*duration, flow_rate, port)
+            self.set(self.hamilton_700_diameters[str(svolume)], svolume, flow_rate*duration, flow_rate, ser)
 
         elif start == False:
-            self.ser.write(("stop" + "\r\n").encode())
+            ser.write(("stop" + "\r\n").encode())
         time.sleep(0.5)
-        response = port.read_all()
+        response = ser.read_all()
         print(response)
         return response
-    
-    def close(self):
-        self.ser.close()

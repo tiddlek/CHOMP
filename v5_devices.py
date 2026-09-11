@@ -99,11 +99,11 @@ class MFC(Device):
         try:
             self.ser = serial.Serial(
                 port=self.port,
-                baudrate=9600,
-                parity=serial.PARITY_ODD,
-                stopbits=serial.STOPBITS_TWO,
-                bytesize=serial.SEVENBITS,
-                timeout=2
+                baudrate=19200,
+                bytesize=serial.EIGHTBITS,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                timeout=1
             )
 
         except serial.SerialException:

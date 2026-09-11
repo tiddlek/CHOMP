@@ -4,25 +4,31 @@ import time
 ser = serial.Serial(
     port="COM7",
     baudrate=19200,
+    bytesize=serial.EIGHTBITS,
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_ONE,
     timeout=1
 )
 
-time.sleep(0.2)
+time.sleep(0.5)
 
-# Clear anything waiting in the input buffer
+# Clear buffers
 ser.reset_input_buffer()
+ser.reset_output_buffer()
 
-# Set MFC to 1.0 SLPM
-print("Setting flow to 1.0 SLPM...")
-ser.write(b"as8.5\r")
+command = "as7.5\r"
+
+print(f"Sending: {repr(command)}")
+
+ser.write(command.encode("ascii"))
 ser.flush()
 
-time.sleep(0.2)
+# Give MFC time to respond
+time.sleep(0.5)
 
-# Read the response
-data = ser.read(ser.in_waiting)
+response = ser.read_all()
 
-print("Response:")
-print(data.decode(errors="replace"))
+print(f"Raw response: {response}")
+print(f"Decoded response: {response.decode(errors='replace')}")
 
 ser.close()

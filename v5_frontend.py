@@ -2298,7 +2298,8 @@ def main():
     for chamber in w.chambers_page.chambers:
         for pump in chamber.pumps:
             pump.ser.close()
-    controller.close()
+        for mfc in chamber.mfcs:
+            mfc.ser.close()
 
 #systemCheck()
 main()
